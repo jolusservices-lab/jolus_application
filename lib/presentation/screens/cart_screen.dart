@@ -16,8 +16,8 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  DateTime _selectedDate = DateTime(2024, 10, 24);
-  String _selectedTime = '11:00 AM';
+  DateTime _selectedDate = DateTime.now();
+  String _selectedTime = '11:00';
   String _paymentMethod = 'Transferencia';
 
   String _getFormattedFullDate() {
@@ -29,6 +29,42 @@ class _CartScreenState extends State<CartScreen> {
     return '${days[_selectedDate.weekday - 1]}, ${_selectedDate.day} de ${months[_selectedDate.month - 1]}, ${_selectedDate.year}';
   }
 
+  Future<void> _selectTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(
+        hour: int.parse(_selectedTime.split(':')[0]),
+        minute: int.parse(_selectedTime.split(':')[1]),
+      ),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF00236F),
+              onPrimary: Colors.white,
+              onSurface: Color(0xFF00236F),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        final hour = picked.hour.toString().padLeft(2, '0');
+        final minute = picked.minute.toString().padLeft(2, '0');
+        _selectedTime = '$hour:$minute';
+      });
+    }
+  }
+
+  List<String> _generateTimeSlots() {
+    return [
+      '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', 
+      '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'
+    ];
+  }
+
   Future<void> _sendWhatsAppMessage(BuildContext context, CartProvider cart, UserProvider user) async {
     final String itemsDetail = cart.items.values
         .map((item) => '${item.quantity}x ${item.title}')
@@ -38,21 +74,25 @@ class _CartScreenState extends State<CartScreen> {
     
     final String message = '''
 NUEVO PEDIDO - JOLUS SERVICES
-Cliente: \${user.name}
-Entrega en: \${user.address}
-Fecha de Servicio: \${_getFormattedFullDate()}
-Hora: \$_selectedTime
-Detalle: \$itemsDetail
-Total: \\\$\${total.toStringAsFixed(2)} USD
+Cliente: ${user.name}
+Entrega en: ${user.address}
+Fecha de Servicio: ${_getFormattedFullDate()}
+Hora: $_selectedTime
+Detalle: $itemsDetail
+Total: \$${total.toStringAsFixed(2)} USD
 ''';
 
     // Guardar el pedido localmente en el historial
     await Provider.of<OrderProvider>(context, listen: false).addOrder(
       cart.items.values.toList(),
       total,
+      serviceDate: _getFormattedFullDate(),
+      serviceTime: _selectedTime,
+      userEmail: user.email,
+      userName: user.name,
     );
 
-    final Uri url = Uri.parse("https://wa.me/593992512048?text=\${Uri.encodeComponent(message)}");
+    final Uri url = Uri.parse("https://wa.me/593992512048?text=${Uri.encodeComponent(message)}");
     
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
@@ -147,9 +187,8 @@ Total: \\\$\${total.toStringAsFixed(2)} USD
               ),
             )),
 
-            const SizedBox(height: 32),
             Text(
-              'Servicio para el \${_selectedDate.day}/\${_selectedDate.month} a las \$_selectedTime',
+              'Servicio para el ${_selectedDate.day}/${_selectedDate.month} a las $_selectedTime',
               style: GoogleFonts.manrope(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -196,7 +235,8 @@ Total: \\\$\${total.toStringAsFixed(2)} USD
                       }
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      constraints: const BoxConstraints(minHeight: 80),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
                           colors: [Color(0xFF00236F), Color(0xFF1E3A8A)],
@@ -210,20 +250,21 @@ Total: \\\$\${total.toStringAsFixed(2)} USD
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.calendar_month_rounded, size: 22, color: Colors.white),
+                          const Icon(Icons.calendar_month_rounded, size: 28, color: Colors.white),
                           const SizedBox(width: 16),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  'FECHA Y HORA DE SERVICIO',
+                                  'FECHA Y HORA DE SERVICIO SELECCIONADA',
                                   style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white.withValues(alpha: 0.7), letterSpacing: 1),
                                 ),
-                                const SizedBox(height: 2),
+                                const SizedBox(height: 4),
                                 Text(
-                                  '\${_getFormattedFullDate()} - \$_selectedTime',
-                                  style: GoogleFonts.manrope(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                                  '${_getFormattedFullDate()} - $_selectedTime',
+                                  style: GoogleFonts.manrope(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white, height: 1.2),
                                 ),
                               ],
                             ),
@@ -234,17 +275,45 @@ Total: \\\$\${total.toStringAsFixed(2)} USD
                     ),
                   ),
                   const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildMiniCalendarDay('Lun', 19, false),
-                      _buildMiniCalendarDay('Mar', 20, false),
-                      _buildMiniCalendarDay('Mié', 21, false),
-                      _buildMiniCalendarDay('Jue', 22, false),
-                      _buildMiniCalendarDay('Vie', 23, false),
-                      _buildMiniCalendarDay('Sáb', 24, true),
-                      _buildMiniCalendarDay('Dom', 25, false),
-                    ],
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'PRÓXIMAS 3 SEMANAS',
+                          style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.grey[600], letterSpacing: 1),
+                        ),
+                        Text(
+                          '${_selectedDate.day}/${_selectedDate.month}',
+                          style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w800, color: const Color(0xFF00236F)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: List.generate(21, (index) {
+                        final date = DateTime.now().add(Duration(days: index));
+                        final isSelected = date.day == _selectedDate.day && 
+                                         date.month == _selectedDate.month && 
+                                         date.year == _selectedDate.year;
+                        final daysShort = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: GestureDetector(
+                            onTap: () => setState(() => _selectedDate = date),
+                            child: _buildMiniCalendarDay(
+                              daysShort[date.weekday - 1], 
+                              date.day, 
+                              isSelected
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
                   ),
                   const SizedBox(height: 24),
                   Align(
@@ -257,6 +326,14 @@ Total: \\\$\${total.toStringAsFixed(2)} USD
                           'HORARIOS DISPONIBLES',
                           style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.grey[600], letterSpacing: 1),
                         ),
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: () => _selectTime(context),
+                          child: Text(
+                            'RELOJ',
+                            style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w900, color: const Color(0xFF00236F), decoration: TextDecoration.underline),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -265,15 +342,22 @@ Total: \\\$\${total.toStringAsFixed(2)} USD
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        _buildTimeChip('09:00 AM', _selectedTime == '09:00 AM'),
-                        const SizedBox(width: 12),
-                        _buildTimeChip('11:00 AM', _selectedTime == '11:00 AM'),
-                        const SizedBox(width: 12),
-                        _buildTimeChip('01:00 PM', _selectedTime == '01:00 PM'),
-                        const SizedBox(width: 12),
-                        _buildTimeChip('03:00 PM', _selectedTime == '03:00 PM'),
-                        const SizedBox(width: 12),
-                        _buildTimeChip('05:00 PM', _selectedTime == '05:00 PM'),
+                        ..._generateTimeSlots().map((time) => Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: _buildTimeChip(time, _selectedTime == time),
+                        )),
+                        GestureDetector(
+                          onTap: () => _selectTime(context),
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF2F4F8),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: Colors.grey[200]!),
+                            ),
+                            child: const Icon(Icons.more_time_rounded, size: 20, color: Color(0xFF00236F)),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -324,17 +408,17 @@ Total: \\\$\${total.toStringAsFixed(2)} USD
                     style: GoogleFonts.manrope(fontSize: 17, fontWeight: FontWeight.bold, color: const Color(0xFF00236F)),
                   ),
                   const SizedBox(height: 20),
-                  _buildSummaryRow('Subtotal', '\\\$\${cart.totalAmount.toStringAsFixed(2)}'),
+                  _buildSummaryRow('Subtotal', '\$${cart.totalAmount.toStringAsFixed(2)}'),
                   const SizedBox(height: 12),
-                  _buildSummaryRow('Impuestos (7%)', '\\\$\${(cart.totalAmount * 0.07).toStringAsFixed(2)}'),
+                  _buildSummaryRow('Impuestos (7%)', '\$${(cart.totalAmount * 0.07).toStringAsFixed(2)}'),
                   const SizedBox(height: 12),
-                  _buildSummaryRow('Cargos por servicio', '\\\$5.00'),
+                  _buildSummaryRow('Cargos por servicio', '\$5.00'),
                   const SizedBox(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('Total', style: GoogleFonts.manrope(fontSize: 20, fontWeight: FontWeight.bold, color: const Color(0xFF00236F))),
-                      Text('\\\$\${(cart.totalAmount * 1.07 + 5.0).toStringAsFixed(2)}', style: GoogleFonts.manrope(fontSize: 28, fontWeight: FontWeight.w800, color: const Color(0xFF00236F))),
+                      Text('\$${(cart.totalAmount * 1.07 + 5.0).toStringAsFixed(2)}', style: GoogleFonts.manrope(fontSize: 28, fontWeight: FontWeight.w800, color: const Color(0xFF00236F))),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -367,7 +451,7 @@ Total: \\\$\${total.toStringAsFixed(2)} USD
                   const SizedBox(height: 16),
                   Center(
                     child: Text(
-                      'Al confirmar, aceptas nuestros términos\\ny condiciones.',
+                      'Al confirmar, aceptas nuestros términos\ny condiciones.',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(fontSize: 11, color: Colors.grey[500], height: 1.4),
                     ),
@@ -445,7 +529,7 @@ Total: \\\$\${total.toStringAsFixed(2)} USD
                               child: Icon(Icons.remove, size: 16, color: Color(0xFF00236F)),
                             ),
                           ),
-                          Text('\$quantity', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: const Color(0xFF00236F))),
+                          Text('$quantity', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: const Color(0xFF00236F))),
                           GestureDetector(
                             onTap: () => cart.addItem(id, title, double.parse(price), imageUrl),
                             child: const Padding(
@@ -456,7 +540,7 @@ Total: \\\$\${total.toStringAsFixed(2)} USD
                         ],
                       ),
                     ),
-                    Text('\\\$\${price} USD', style: GoogleFonts.manrope(fontWeight: FontWeight.w800, color: const Color(0xFF00236F), fontSize: 15)),
+                    Text('\$${price} USD', style: GoogleFonts.manrope(fontWeight: FontWeight.w800, color: const Color(0xFF00236F), fontSize: 15)),
                   ],
                 ),
               ],
@@ -507,7 +591,7 @@ Total: \\\$\${total.toStringAsFixed(2)} USD
             border: isSelected ? null : Border.all(color: Colors.grey[100]!),
           ),
           child: Text(
-            '\$date',
+            '$date',
             style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.bold,

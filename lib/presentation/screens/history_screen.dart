@@ -51,11 +51,11 @@ class HistoryScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Row(
                 children: [
-                  _buildStatCard('Total Invertido', '\\\$\${totalSpent.toStringAsFixed(2)}'),
+                  _buildStatCard('Total Invertido', '\$${totalSpent.toStringAsFixed(2)}'),
                   const SizedBox(width: 12),
-                  _buildStatCard('Compras Totales', '\${orders.length}'),
+                  _buildStatCard('Compras Totales', '${orders.length}'),
                   const SizedBox(width: 12),
-                  _buildStatCard('Pedidos Recientes', '\${orders.length > 5 ? 5 : orders.length}'),
+                  _buildStatCard('Pedidos Recientes', '${orders.length > 5 ? 5 : orders.length}'),
                 ],
               ),
             ),
@@ -97,9 +97,9 @@ class HistoryScreen extends StatelessWidget {
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 16),
                           child: _buildHistoryItem(
-                            title: order.products.first.title + (order.products.length > 1 ? ' +\${order.products.length - 1}' : ''),
-                            date: "\${order.dateTime.day}/\${order.dateTime.month}/\${order.dateTime.year}",
-                            price: '\\\$\${order.amount.toStringAsFixed(2)}',
+                            title: order.products.first.title + (order.products.length > 1 ? ' +${order.products.length - 1}' : ''),
+                            date: "${order.dateTime.day}/${order.dateTime.month}/${order.dateTime.year}",
+                            price: '\$${order.amount.toStringAsFixed(2)}',
                             status: 'Completado',
                             statusColor: Colors.green,
                             icon: Icons.shopping_bag_outlined,

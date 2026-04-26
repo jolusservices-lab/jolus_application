@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/theme/colors.dart';
+import '../../core/providers/navigation_provider.dart';
 import '../screens/home_screen.dart';
 import '../screens/services_screen.dart';
 import '../screens/cart_screen.dart';
@@ -15,12 +17,15 @@ class MainNavigation extends StatefulWidget {
 }
 
 class _MainNavigationState extends State<MainNavigation> {
-  late int _selectedIndex;
-
   @override
   void initState() {
     super.initState();
-    _selectedIndex = widget.initialIndex;
+    // Use addPostFrameCallback to avoid calling notifyListeners during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.initialIndex != 0) {
+        context.read<NavigationProvider>().setSelectedIndex(widget.initialIndex);
+      }
+    });
   }
 
   final List<Widget> _screens = [
@@ -33,14 +38,16 @@ class _MainNavigationState extends State<MainNavigation> {
 
   @override
   Widget build(BuildContext context) {
+    final navProvider = context.watch<NavigationProvider>();
+
     return Scaffold(
       body: IndexedStack(
-        index: _selectedIndex,
+        index: navProvider.selectedIndex,
         children: _screens,
       ),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) => setState(() => _selectedIndex = index),
+        selectedIndex: navProvider.selectedIndex,
+        onDestinationSelected: (index) => navProvider.setSelectedIndex(index),
         indicatorColor: JolusColors.primary.withValues(alpha: 0.1),
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home, color: JolusColors.primary), label: 'Inicio'),

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../../core/theme/colors.dart';
 import '../../core/models/service_model.dart';
+import '../../core/providers/navigation_provider.dart';
 import '../widgets/category_carousel.dart';
 import '../widgets/service_card.dart';
 
@@ -10,6 +12,8 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final navProvider = context.read<NavigationProvider>();
+
     return Scaffold(
       backgroundColor: JolusColors.background,
       body: CustomScrollView(
@@ -118,7 +122,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
                     TextButton(
-                      onPressed: () {},
+                      onPressed: () => navProvider.setCategory('Todos'),
                       child: Text(
                         'Ver todas',
                         style: GoogleFonts.inter(
@@ -147,7 +151,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
                     TextButton(
-                      onPressed: () {},
+                      onPressed: () => navProvider.setSelectedIndex(1),
                       child: Text(
                         'Explorar',
                         style: GoogleFonts.inter(

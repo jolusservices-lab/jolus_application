@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../../core/theme/colors.dart';
 import '../../core/services/database_service.dart';
 import '../../core/models/service_model.dart';
+import '../../core/providers/navigation_provider.dart';
 import '../widgets/filter_chip.dart';
 import '../widgets/service_detail_card.dart';
 
@@ -14,7 +16,6 @@ class ServicesScreen extends StatefulWidget {
 }
 
 class _ServicesScreenState extends State<ServicesScreen> {
-  String _selectedService = 'Todos';
   final DatabaseService _dbService = DatabaseService();
 
   final List<String> _servicesList = [
@@ -29,6 +30,9 @@ class _ServicesScreenState extends State<ServicesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final navProvider = context.watch<NavigationProvider>();
+    final selectedService = navProvider.selectedCategory;
+
     return Scaffold(
       backgroundColor: JolusColors.background,
       body: CustomScrollView(
@@ -65,10 +69,10 @@ class _ServicesScreenState extends State<ServicesScreen> {
                   child: Row(
                     children: _servicesList.map((service) {
                       return GestureDetector(
-                        onTap: () => setState(() => _selectedService = service),
+                        onTap: () => navProvider.setCategory(service),
                         child: FilterChipWidget(
                           label: service,
-                          isSelected: _selectedService == service,
+                          isSelected: selectedService == service,
                         ),
                       );
                     }).toList(),
@@ -93,10 +97,10 @@ class _ServicesScreenState extends State<ServicesScreen> {
                     }
 
                     final allProducts = snapshot.data ?? [];
-                    final filteredProducts = _selectedService == 'Todos'
+                    final filteredProducts = selectedService == 'Todos'
                         ? allProducts
                         : allProducts.where((p) => 
-                            p.servicio.toLowerCase() == _selectedService.toLowerCase()
+                            p.servicio.toLowerCase() == selectedService.toLowerCase()
                           ).toList();
 
                     if (filteredProducts.isEmpty) {
