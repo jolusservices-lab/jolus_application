@@ -2,28 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../core/providers/cart_provider.dart';
+import '../../core/models/service_model.dart';
+import '../../core/theme/colors.dart';
 import '../screens/service_detail_screen.dart';
 
 class ServiceDetailCard extends StatelessWidget {
-  final String id;
-  final String category;
-  final String title;
-  final String description;
-  final double price;
-  final String priceLabel;
-  final String imageUrl;
-  final List<Map<String, dynamic>> tags;
+  final ServiceModel service;
 
   const ServiceDetailCard({
     super.key,
-    required this.id,
-    required this.category,
-    required this.title,
-    required this.description,
-    required this.price,
-    required this.priceLabel,
-    required this.imageUrl,
-    required this.tags,
+    required this.service,
   });
 
   @override
@@ -32,14 +20,7 @@ class ServiceDetailCard extends StatelessWidget {
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => ServiceDetailScreen(
-            id: id,
-            title: title,
-            description: description,
-            price: price,
-            imageUrl: imageUrl,
-            category: category,
-          ),
+          builder: (context) => ServiceDetailScreen(service: service),
         ),
       ),
       child: Container(
@@ -62,7 +43,7 @@ class ServiceDetailCard extends StatelessWidget {
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                   child: Image.network(
-                    imageUrl,
+                    service.imagen ?? 'https://via.placeholder.com/400',
                     height: 180,
                     width: double.infinity,
                     fit: BoxFit.cover,
@@ -78,12 +59,12 @@ class ServiceDetailCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      category,
+                      service.categoria.toUpperCase(),
                       style: GoogleFonts.inter(
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 1.0,
-                        color: Colors.grey[800],
+                        color: JolusColors.primary,
                       ),
                     ),
                   ),
@@ -96,16 +77,18 @@ class ServiceDetailCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title,
+                    service.nombre,
                     style: GoogleFonts.manrope(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF00236F),
+                      color: JolusColors.primary,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    description,
+                    service.descripcion,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
                       color: Colors.grey[600],
                       fontSize: 14,
@@ -114,64 +97,44 @@ class ServiceDetailCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Row(
-                    children: tags.map((tag) {
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 16.0),
-                        child: Row(
-                          children: [
-                            Icon(tag['icon'] as IconData, size: 16, color: Colors.grey[700]),
-                            const SizedBox(width: 6),
-                            Text(
-                              tag['label'] as String,
-                              style: GoogleFonts.inter(
-                                color: Colors.grey[700],
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
+                    children: [
+                      const Icon(Icons.inventory_2_outlined, size: 16, color: Colors.grey),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Disponible: ${service.cantidad}',
+                        style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[700]),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            priceLabel,
-                            style: GoogleFonts.inter(
-                              color: Colors.grey[500],
-                              fontSize: 12,
-                            ),
-                          ),
-                          Text(
-                            '\$${price.toStringAsFixed(2)}',
-                            style: GoogleFonts.manrope(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF00236F),
-                            ),
-                          ),
-                        ],
+                      Text(
+                        '\$${service.precio.toStringAsFixed(2)}',
+                        style: GoogleFonts.manrope(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: JolusColors.primary,
+                        ),
                       ),
                       ElevatedButton(
                         onPressed: () {
-                          Provider.of<CartProvider>(context, listen: false).addItem(id, title, price, imageUrl);
+                          context.read<CartProvider>().addItem(
+                            service.id,
+                            service.nombre,
+                            service.precio,
+                            service.imagen ?? '',
+                          );
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('$title añadido al carrito'), duration: const Duration(seconds: 1)),
+                            SnackBar(content: Text('${service.nombre} añadido al carrito')),
                           );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF00236F),
+                          backgroundColor: JolusColors.primary,
                           foregroundColor: Colors.white,
-                          elevation: 0,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                         ),
                         child: const Text('Reservar', style: TextStyle(fontWeight: FontWeight.bold)),
                       ),

@@ -11,9 +11,9 @@ class AuthService {
       if (Platform.isWindows) {
         await _supabase.auth.signInWithOAuth(
           OAuthProvider.google,
-          redirectTo: 'io.supabase.flutter://callback', // Configura esto en tu dashboard de Supabase
+          redirectTo: 'io.supabase.flutter://callback',
         );
-        return null; // El flujo continúa en el navegador y regresa a la app
+        return null;
       }
 
       // Flujo nativo para Android/iOS (requiere google_sign_in)

@@ -3,30 +3,15 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/colors.dart';
 import '../../core/providers/cart_provider.dart';
+import '../../core/models/service_model.dart';
 import '../screens/service_detail_screen.dart';
 
 class ServiceCard extends StatelessWidget {
-  final String id;
-  final String title;
-  final double price;
-  final String unit;
-  final String description;
-  final String rating;
-  final IconData footerIcon;
-  final String footerText;
-  final String imageUrl;
+  final ServiceModel service;
 
   const ServiceCard({
     super.key,
-    required this.id,
-    required this.title,
-    required this.price,
-    required this.unit,
-    required this.description,
-    required this.rating,
-    required this.footerIcon,
-    required this.footerText,
-    required this.imageUrl,
+    required this.service,
   });
 
   @override
@@ -35,14 +20,7 @@ class ServiceCard extends StatelessWidget {
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => ServiceDetailScreen(
-            id: id,
-            title: title,
-            description: description,
-            price: price,
-            imageUrl: imageUrl,
-            category: 'Destacado',
-          ),
+          builder: (context) => ServiceDetailScreen(service: service),
         ),
       ),
       child: Container(
@@ -67,32 +45,8 @@ class ServiceCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                     image: DecorationImage(
-                      image: NetworkImage(imageUrl),
+                      image: NetworkImage(service.imagen ?? 'https://via.placeholder.com/400'),
                       fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 16,
-                  left: 16,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4)
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.star, color: Colors.amber, size: 16),
-                        const SizedBox(width: 4),
-                        Text(
-                          rating,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                        ),
-                      ],
                     ),
                   ),
                 ),
@@ -108,7 +62,7 @@ class ServiceCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          title,
+                          service.nombre,
                           style: GoogleFonts.manrope(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -116,32 +70,21 @@ class ServiceCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      RichText(
-                        text: TextSpan(
-                          children: [
-                            TextSpan(
-                              text: '\$${price.toStringAsFixed(0)}',
-                              style: GoogleFonts.manrope(
-                                color: JolusColors.primary,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 20,
-                              ),
-                            ),
-                            TextSpan(
-                              text: unit,
-                              style: GoogleFonts.inter(
-                                color: Colors.grey,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
+                      Text(
+                        '\$${service.precio.toStringAsFixed(0)}',
+                        style: GoogleFonts.manrope(
+                          color: JolusColors.primary,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 20,
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    description,
+                    service.descripcion,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
                       color: Colors.grey[600],
                       fontSize: 14,
@@ -149,40 +92,27 @@ class ServiceCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(footerIcon, size: 18, color: JolusColors.primary.withOpacity(0.6)),
-                          const SizedBox(width: 8),
-                          Text(
-                            footerText,
-                            style: GoogleFonts.inter(
-                              color: Colors.grey[700],
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        context.read<CartProvider>().addItem(
+                          service.id,
+                          service.nombre,
+                          service.precio,
+                          service.imagen ?? '',
+                        );
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('${service.nombre} añadido')),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: JolusColors.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      ElevatedButton(
-                        onPressed: () {
-                          Provider.of<CartProvider>(context, listen: false).addItem(id, title, price, imageUrl);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('$title añadido al carrito'), duration: const Duration(seconds: 1)),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: JolusColors.primary,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                        ),
-                        child: const Text('Reservar', style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                    ],
+                      child: const Text('Añadir al carrito'),
+                    ),
                   ),
                 ],
               ),

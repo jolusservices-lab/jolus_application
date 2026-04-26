@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/colors.dart';
+import '../../core/models/service_model.dart';
 import '../widgets/category_carousel.dart';
 import '../widgets/service_card.dart';
 
@@ -159,28 +160,30 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
 
-                const ServiceCard(
-                  id: 's1',
-                  title: 'Buffet Ejecutivo Premium',
-                  price: 45.0,
-                  unit: '/pp',
-                  description: 'Servicio completo para eventos corporativos con opciones gourmet...',
-                  rating: '4.9',
-                  footerIcon: Icons.access_time,
-                  footerText: 'Min. 3h',
-                  imageUrl: 'https://images.unsplash.com/photo-1555244162-803834f70033?q=80&w=800',
+                ServiceCard(
+                  service: ServiceModel(
+                    id: 's1',
+                    nombre: 'Buffet Ejecutivo Premium',
+                    precio: 45.0,
+                    descripcion: 'Servicio completo para eventos corporativos con opciones gourmet...',
+                    imagen: 'https://images.unsplash.com/photo-1555244162-803834f70033?q=80&w=800',
+                    categoria: 'Premium',
+                    servicio: 'Buffet',
+                    cantidad: 1,
+                  ),
                 ),
                 const SizedBox(height: 16),
-                const ServiceCard(
-                  id: 's2',
-                  title: 'Barra Móvil de Cócteles',
-                  price: 280.0,
-                  unit: '/evento',
-                  description: 'Mixología creativa para bodas y fiestas privadas. Incluye insumos y barra...',
-                  rating: '4.8',
-                  footerIcon: Icons.people_outline,
-                  footerText: 'Hasta 50 pers.',
-                  imageUrl: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=800',
+                ServiceCard(
+                  service: ServiceModel(
+                    id: 's2',
+                    nombre: 'Barra Móvil de Cócteles',
+                    precio: 280.0,
+                    descripcion: 'Mixología creativa para bodas y fiestas privadas. Incluye insumos y barra...',
+                    imagen: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=800',
+                    categoria: 'VIP',
+                    servicio: 'Coctelería',
+                    cantidad: 1,
+                  ),
                 ),
                 const SizedBox(height: 24),
               ]),

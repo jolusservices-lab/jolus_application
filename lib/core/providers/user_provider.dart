@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UserProvider extends ChangeNotifier {
-  String _name = 'Javier Oliveras';
-  String _email = 'javier.oliveras@example.com';
-  String _phone = '+34 612 345 678';
-  String _address = 'Calle Principal 123, Madrid';
+  String _name = 'Invitado';
+  String _email = '';
+  String? _photoUrl;
+  String _phone = '';
+  String _address = '';
 
   UserProvider() {
     _loadFromPrefs();
@@ -13,16 +14,50 @@ class UserProvider extends ChangeNotifier {
 
   String get name => _name;
   String get email => _email;
+  String? get photoUrl => _photoUrl;
   String get phone => _phone;
   String get address => _address;
 
   Future<void> _loadFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
-    _name = prefs.getString('user_name') ?? _name;
-    _email = prefs.getString('user_email') ?? _email;
-    _phone = prefs.getString('user_phone') ?? _phone;
-    _address = prefs.getString('user_address') ?? _address;
+    _name = prefs.getString('user_name') ?? 'Invitado';
+    _email = prefs.getString('user_email') ?? '';
+    _photoUrl = prefs.getString('user_photo_url');
+    _phone = prefs.getString('user_phone') ?? '';
+    _address = prefs.getString('user_address') ?? '';
     notifyListeners();
+  }
+
+  void setUser({
+    required String name,
+    required String email,
+    String? photoUrl,
+  }) async {
+    _name = name;
+    _email = email;
+    _photoUrl = photoUrl;
+    
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_name', name);
+    await prefs.setString('user_email', email);
+    if (photoUrl != null) {
+      await prefs.setString('user_photo_url', photoUrl);
+    } else {
+      await prefs.remove('user_photo_url');
+    }
+    
+    notifyListeners();
+  }
+
+  void syncWithSupabaseUser(dynamic user) {
+    if (user == null) return;
+    
+    // Extraer metadatos de Google/Supabase
+    final String name = user.userMetadata?['full_name'] ?? user.email?.split('@')[0] ?? 'Usuario';
+    final String email = user.email ?? '';
+    final String? photoUrl = user.userMetadata?['avatar_url'] ?? user.userMetadata?['picture'];
+
+    setUser(name: name, email: email, photoUrl: photoUrl);
   }
 
   Future<void> updateProfile({
@@ -41,6 +76,19 @@ class UserProvider extends ChangeNotifier {
     await prefs.setString('user_email', email);
     await prefs.setString('user_phone', phone);
     await prefs.setString('user_address', address);
+    
+    notifyListeners();
+  }
+
+  void clearUser() async {
+    _name = 'Invitado';
+    _email = '';
+    _photoUrl = null;
+    
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('user_name');
+    await prefs.remove('user_email');
+    await prefs.remove('user_photo_url');
     
     notifyListeners();
   }
