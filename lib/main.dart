@@ -14,8 +14,12 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => CartProvider()),
         ChangeNotifierProvider(create: (context) => UserProvider()),
+        ChangeNotifierProxyProvider<UserProvider, CartProvider>(
+          create: (context) => CartProvider(),
+          update: (context, userProvider, cartProvider) =>
+              cartProvider!..updateUserId(userProvider.id),
+        ),
         ChangeNotifierProvider(create: (context) => OrderProvider()),
         ChangeNotifierProvider(create: (context) => NavigationProvider()),
       ],

@@ -16,108 +16,152 @@ class ServiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ServiceDetailScreen(service: service),
+    return _AnimatedServiceCard(service: service);
+  }
+}
+
+class _AnimatedServiceCard extends StatefulWidget {
+  final ServiceModel service;
+  const _AnimatedServiceCard({required this.service});
+
+  @override
+  State<_AnimatedServiceCard> createState() => _AnimatedServiceCardState();
+}
+
+class _AnimatedServiceCardState extends State<_AnimatedServiceCard> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ServiceDetailScreen(service: widget.service),
+          ),
         ),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 15,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
-              children: [
-                Container(
-                  height: 200,
-                  decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                    image: DecorationImage(
-                      image: NetworkImage(service.imagen ?? 'https://via.placeholder.com/400'),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+          transform: Matrix4.identity()
+            ..translate(0.0, _isHovered ? -8.0 : 0.0)
+            ..scale(_isHovered ? 1.02 : 1.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(_isHovered ? 0.12 : 0.05),
+                blurRadius: _isHovered ? 25 : 15,
+                offset: Offset(0, _isHovered ? 12 : 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Stack(
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          service.nombre,
-                          style: GoogleFonts.manrope(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: JolusColors.onSurfaceVariant,
-                          ),
+                  Hero(
+                    tag: 'service_image_${widget.service.id}',
+                    child: Container(
+                      height: 200,
+                      decoration: BoxDecoration(
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                        image: DecorationImage(
+                          image: NetworkImage(widget.service.imagen ?? 'https://via.placeholder.com/400'),
+                          fit: BoxFit.cover,
                         ),
                       ),
-                      Text(
-                        '\$${service.precio.toStringAsFixed(0)}',
-                        style: GoogleFonts.manrope(
-                          color: JolusColors.primary,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 20,
+                    ),
+                  ),
+                  if (_isHovered)
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                          color: Colors.black.withOpacity(0.05),
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    service.descripcion,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      color: Colors.grey[600],
-                      fontSize: 14,
-                      height: 1.5,
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        context.read<CartProvider>().addItem(
-                          service.id,
-                          service.nombre,
-                          service.precio,
-                          service.imagen ?? '',
-                        );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('${service.nombre} añadido')),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: JolusColors.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: const Text('Añadir al carrito'),
-                    ),
-                  ),
                 ],
               ),
-            ),
-          ],
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            widget.service.nombre,
+                            style: GoogleFonts.manrope(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: JolusColors.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '\$${widget.service.precio.toStringAsFixed(0)}',
+                          style: GoogleFonts.manrope(
+                            color: JolusColors.primary,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 20,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      widget.service.descripcion,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        color: Colors.grey[600],
+                        fontSize: 14,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          context.read<CartProvider>().addItem(
+                            widget.service.id,
+                            widget.service.nombre,
+                            widget.service.precio,
+                            widget.service.imagen ?? '',
+                          );
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('${widget.service.nombre} añadido'),
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: JolusColors.primary,
+                          foregroundColor: Colors.white,
+                          elevation: _isHovered ? 4 : 0,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text('Añadir al carrito', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

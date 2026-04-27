@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/colors.dart';
 import '../../core/providers/user_provider.dart';
+import '../../core/services/database_service.dart';
 import '../widgets/main_navigation.dart';
 import 'auth/login_screen.dart';
 
@@ -22,6 +25,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late TextEditingController _phoneController;
   late TextEditingController _addressController;
 
+  String _whatsapp = '...';
+  String _instagram = '...';
+  String _facebook = '...';
+  String _usernameHandle = '...';
+
   @override
   void initState() {
     super.initState();
@@ -30,6 +38,94 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _emailController = TextEditingController(text: user.email);
     _phoneController = TextEditingController(text: user.phone);
     _addressController = TextEditingController(text: user.address);
+    _fetchSocialLinks();
+  }
+
+  Future<void> _fetchSocialLinks() async {
+    try {
+      final adminProfile = await DatabaseService().getAdminProfile();
+
+      if (mounted) {
+        if (adminProfile != null) {
+          setState(() {
+            _facebook = adminProfile.linkFacebook ?? '';
+            _instagram = adminProfile.linkInstagram ?? '';
+            _whatsapp = adminProfile.linkWhatsapp ?? '';
+            _usernameHandle = adminProfile.nombreUsuarioArroba ?? 'jolus_app';
+          });
+        } else {
+          setState(() {
+            _facebook = '';
+            _instagram = '';
+            _whatsapp = '';
+            _usernameHandle = '';
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error cargando redes sociales: $e');
+    }
+  }
+
+  Future<void> _launchURL(String url) async {
+    print('DEBUG: Intentando abrir URL original: "$url"');
+    if (url == '...' || url == 'No disponible' || url.isEmpty) {
+      print('DEBUG: URL inválida o vacía, abortando.');
+      return;
+    }
+    
+    String finalUrl = url.trim();
+    
+    // Lógica para WhatsApp
+    if (RegExp(r'^\+?[0-9\s\-]{7,20}$').hasMatch(finalUrl) || finalUrl.contains('wa.me')) {
+      if (!finalUrl.startsWith('http')) {
+        final cleanNumber = finalUrl.replaceAll(RegExp(r'[^0-9]'), '');
+        finalUrl = 'https://wa.me/$cleanNumber';
+      }
+    } 
+    // Lógica para Redes Sociales si no tienen protocolo
+    else if (!finalUrl.startsWith('http')) {
+      if (finalUrl.contains('facebook.com')) {
+        finalUrl = 'https://$finalUrl';
+      } else if (finalUrl.contains('instagram.com')) {
+        finalUrl = 'https://$finalUrl';
+      } else if (finalUrl.startsWith('@')) {
+        finalUrl = 'https://instagram.com/${finalUrl.substring(1)}';
+      } else {
+        // Intento genérico si parece un dominio
+        finalUrl = 'https://$finalUrl';
+      }
+    }
+
+    print('DEBUG: URL procesada para abrir: "$finalUrl"');
+
+    try {
+      final Uri uri = Uri.parse(finalUrl);
+      // Intentamos primero con la aplicación externa
+      bool launched = await launchUrl(
+        uri, 
+        mode: LaunchMode.externalApplication,
+      );
+      
+      if (!launched) {
+        print('DEBUG: No se pudo abrir con aplicación externa, intentando modo plataforma...');
+        launched = await launchUrl(uri, mode: LaunchMode.platformDefault);
+      }
+
+      if (!launched) {
+        throw 'No se pudo lanzar la URL';
+      }
+    } catch (e) {
+      print('ERROR: Fallo total al abrir la URL: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No se pudo abrir el enlace. Verifica si tienes la app instalada o la URL es válida.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -312,21 +408,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     icon: Icons.chat_bubble_outline,
                     iconColor: Colors.green,
                     title: 'WhatsApp',
-                    value: '+34 612 345 678',
+                    value: _usernameHandle,
+                    onTap: () => _launchURL(_whatsapp),
                   ),
                   const SizedBox(height: 12),
                   _buildSocialTile(
                     icon: Icons.camera_alt_outlined,
                     iconColor: Colors.pink,
                     title: 'Instagram',
-                    value: '@javier_servicios',
+                    value: _usernameHandle,
+                    onTap: () => _launchURL(_instagram),
                   ),
                   const SizedBox(height: 12),
                   _buildSocialTile(
                     icon: Icons.facebook_outlined,
                     iconColor: Colors.blue,
                     title: 'Facebook',
-                    value: 'fb.com/javier.oliveras',
+                    value: _usernameHandle,
+                    onTap: () => _launchURL(_facebook),
                   ),
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 20),
@@ -462,40 +561,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required Color iconColor,
     required String title,
     required String value,
+    VoidCallback? onTap,
   }) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, color: iconColor, size: 20),
-        ),
-        const SizedBox(width: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Row(
           children: [
-            Text(
-              title,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                color: Colors.grey[500],
-                fontWeight: FontWeight.w500,
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: Colors.grey[500],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    value,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
-            Text(
-              value,
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-              ),
-            ),
+            if (onTap != null && value != '...' && value != 'No disponible')
+              Icon(Icons.open_in_new, size: 16, color: Colors.grey[300]),
           ],
         ),
-      ],
+      ),
     );
   }
 }

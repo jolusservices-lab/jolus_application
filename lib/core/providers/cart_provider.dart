@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/cart_item.dart';
+import '../services/database_service.dart';
 
 class CartProvider extends ChangeNotifier {
   final Map<String, CartItem> _items = {};
+  final DatabaseService _dbService = DatabaseService();
+  String? _userId;
 
   Map<String, CartItem> get items => {..._items};
 
@@ -14,6 +17,18 @@ class CartProvider extends ChangeNotifier {
       total += cartItem.price * cartItem.quantity;
     });
     return total;
+  }
+
+  void updateUserId(String? userId) {
+    _userId = userId;
+    if (_userId != null) {
+      _syncWithSupabase();
+    }
+  }
+
+  Future<void> _syncWithSupabase() async {
+    if (_userId == null || _userId!.isEmpty) return;
+    await _dbService.syncCart(_userId!, _items.values.toList());
   }
 
   void addItem(String productId, String title, double price, String imageUrl) {
@@ -39,11 +54,13 @@ class CartProvider extends ChangeNotifier {
         ),
       );
     }
+    _syncWithSupabase();
     notifyListeners();
   }
 
   void removeItem(String productId) {
     _items.remove(productId);
+    _syncWithSupabase();
     notifyListeners();
   }
 
@@ -63,11 +80,13 @@ class CartProvider extends ChangeNotifier {
     } else {
       _items.remove(productId);
     }
+    _syncWithSupabase();
     notifyListeners();
   }
 
   void clear() {
     _items.clear();
+    _syncWithSupabase();
     notifyListeners();
   }
 }
