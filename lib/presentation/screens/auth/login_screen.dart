@@ -84,7 +84,11 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       }
     } on AuthException catch (e) {
-      _showError(e.message);
+      String message = e.message;
+      if (message == 'Invalid login credentials') {
+        message = 'Usuario o contraseña incorrectos';
+      }
+      _showError(message);
     } catch (e) {
       _showError('Error inesperado: $e');
     } finally {

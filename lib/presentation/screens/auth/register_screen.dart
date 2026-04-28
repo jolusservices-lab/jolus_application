@@ -305,11 +305,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
           obscureText: _obscureText,
           validator: (value) {
             if (value == null || value.isEmpty) return 'Campo obligatorio';
-            if (value.length < 6) return 'Mínimo 6 caracteres';
+            if (value.length < 8) return 'Mínimo 8 caracteres';
             return null;
           },
           decoration: InputDecoration(
-            hintText: 'Mínimo 6 caracteres',
+            hintText: 'Mínimo 8 caracteres',
             suffixIcon: IconButton(
               icon: Icon(_obscureText ? Icons.visibility_outlined : Icons.visibility_off_outlined),
               onPressed: () => setState(() => _obscureText = !_obscureText),
