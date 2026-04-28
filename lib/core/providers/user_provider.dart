@@ -6,6 +6,7 @@ import '../models/user_model.dart';
 class UserProvider extends ChangeNotifier {
   String _id = '';
   String _name = 'Invitado';
+  String _subname = '';
   String _email = '';
   String? _photoUrl;
   String _phone = '';
@@ -19,6 +20,7 @@ class UserProvider extends ChangeNotifier {
 
   String get id => _id;
   String get name => _name;
+  String get subname => _subname;
   String get email => _email;
   String? get photoUrl => _photoUrl;
   String get phone => _phone;
@@ -28,6 +30,7 @@ class UserProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     _id = prefs.getString('user_id') ?? '';
     _name = prefs.getString('user_name') ?? 'Invitado';
+    _subname = prefs.getString('user_subname') ?? '';
     _email = prefs.getString('user_email') ?? '';
     _photoUrl = prefs.getString('user_photo_url');
     _phone = prefs.getString('user_phone') ?? '';
@@ -39,33 +42,34 @@ class UserProvider extends ChangeNotifier {
     required String id,
     required String name,
     required String email,
+    String? subname,
     String? photoUrl,
+    String? phone,
+    String? address,
   }) async {
     _id = id;
     _name = name;
     _email = email;
     _photoUrl = photoUrl;
+    if (subname != null) _subname = subname;
+    if (phone != null) _phone = phone;
+    if (address != null) _address = address;
     
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('user_id', id);
-    await prefs.setString('user_name', name);
-    await prefs.setString('user_email', email);
-    if (photoUrl != null) {
-      await prefs.setString('user_photo_url', photoUrl);
+    await prefs.setString('user_name', _name);
+    await prefs.setString('user_subname', _subname);
+    await prefs.setString('user_email', _email);
+    await prefs.setString('user_phone', _phone);
+    await prefs.setString('user_address', _address);
+
+    if (_photoUrl != null) {
+      await prefs.setString('user_photo_url', _photoUrl!);
     } else {
       await prefs.remove('user_photo_url');
     }
-
-    // Sincronizar con Supabase (tabla usuarios)
-    await _dbService.syncUser(UserModel(
-      id: _id,
-      email: _email,
-      name: _name,
-      photoUrl: _photoUrl,
-      phone: _phone,
-      address: _address,
-    ));
     
+    // Eliminada la llamada a syncUser aquí para evitar duplicados
     notifyListeners();
   }
 
@@ -82,27 +86,31 @@ class UserProvider extends ChangeNotifier {
 
   Future<void> updateProfile({
     required String name,
+    required String subname,
     required String email,
     required String phone,
     required String address,
   }) async {
     _name = name;
+    _subname = subname;
     _email = email;
     _phone = phone;
     _address = address;
     
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('user_name', name);
+    await prefs.setString('user_subname', subname);
     await prefs.setString('user_email', email);
     await prefs.setString('user_phone', phone);
     await prefs.setString('user_address', address);
 
-    // Sincronizar con Supabase
+    // Sincronizar con Supabase solo cuando sea una actualización explícita
     if (_id.isNotEmpty) {
       await _dbService.syncUser(UserModel(
         id: _id,
         email: _email,
         name: _name,
+        subname: _subname,
         photoUrl: _photoUrl,
         phone: _phone,
         address: _address,
@@ -122,14 +130,14 @@ class UserProvider extends ChangeNotifier {
   void clearUser() async {
     _id = '';
     _name = 'Invitado';
+    _subname = '';
     _email = '';
     _photoUrl = null;
+    _phone = '';
+    _address = '';
     
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('user_id');
-    await prefs.remove('user_name');
-    await prefs.remove('user_email');
-    await prefs.remove('user_photo_url');
+    await prefs.clear(); // Limpiar todo al cerrar sesión
     
     notifyListeners();
   }

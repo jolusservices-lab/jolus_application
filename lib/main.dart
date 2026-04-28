@@ -9,6 +9,8 @@ import 'core/providers/order_provider.dart';
 import 'core/providers/navigation_provider.dart';
 import 'presentation/screens/auth/splash_screen.dart';
 import 'core/supabase_config.dart';
+import 'core/services/database_service.dart';
+import 'core/models/user_model.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -63,11 +65,28 @@ class _JolusAppState extends State<JolusApp> {
       print('DEBUG AUTH: Evento detectado: $event');
 
       if ((event == AuthChangeEvent.signedIn || event == AuthChangeEvent.initialSession) && session != null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
           if (mounted) {
             final userProvider = Provider.of<UserProvider>(context, listen: false);
-            userProvider.syncWithSupabaseUser(session.user);
-            print('DEBUG AUTH: Usuario sincronizado tras login exitoso');
+            
+            // Priorizar datos de la tabla 'usuarios' para evitar nombres mezclados
+            final dbUser = await DatabaseService().getUser(session.user.id);
+            
+            if (dbUser != null) {
+              userProvider.setUser(
+                id: dbUser.id,
+                name: dbUser.name ?? '',
+                subname: dbUser.subname ?? '',
+                email: dbUser.email ?? '',
+                photoUrl: dbUser.photoUrl,
+                phone: dbUser.phone,
+                address: dbUser.address,
+              );
+            } else {
+              userProvider.syncWithSupabaseUser(session.user);
+            }
+            
+            print('DEBUG AUTH: Usuario sincronizado desde la BD tras login');
           }
         });
       }

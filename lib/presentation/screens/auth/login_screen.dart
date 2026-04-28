@@ -56,6 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
             // Sincronizar provider con los datos de la tabla 'usuarios'
             await userProvider.updateProfile(
               name: userData.name ?? '',
+              subname: userData.subname ?? '',
               email: userData.email ?? '',
               phone: userData.phone ?? '',
               address: userData.address ?? '',
@@ -64,6 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
             userProvider.setUser(
               id: user.id,
               name: userData.name ?? '',
+              subname: userData.subname ?? '',
               email: userData.email ?? '',
               photoUrl: userData.photoUrl,
             );
@@ -281,6 +283,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         userProvider.setUser(
                                           id: userData.id,
                                           name: userData.name ?? '',
+                                          subname: userData.subname ?? '',
                                           email: userData.email ?? '',
                                           photoUrl: userData.photoUrl,
                                         );

@@ -19,7 +19,7 @@ class UserModel {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id'] ?? '',
+      id: json['user_id'] ?? json['id'] ?? '',
       email: json['correo'] ?? json['email'] ?? '',
       name: json['nombres'] ?? json['name'],
       subname: json['apellidos'] ?? json['subname'],
@@ -31,7 +31,7 @@ class UserModel {
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      'user_id': id, // Cambiado de 'id' a 'user_id' para coincidir con la BD
       'correo': email,
       'nombres': name,
       'apellidos': subname,

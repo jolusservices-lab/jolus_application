@@ -57,13 +57,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       final user = res.user;
       if (user != null) {
-        final fullName = '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}';
-        
-        // 2. Crear modelo de usuario para la tabla 'usuarios'
+        // 2. Crear modelo de usuario con todos los campos para la tabla 'usuarios'
         final newUser = UserModel(
           id: user.id,
           email: _emailController.text.trim(),
-          name: fullName,
+          name: _firstNameController.text.trim(),
+          subname: _lastNameController.text.trim(),
           phone: _phoneController.text.trim(),
           address: _addressController.text.trim(),
           photoUrl: null,
@@ -72,31 +71,63 @@ class _RegisterScreenState extends State<RegisterScreen> {
         // 3. Guardar en la tabla 'usuarios' de Supabase
         await DatabaseService().syncUser(newUser);
 
-        // 4. Actualizar estado local
+        // 4. Mostrar por pantalla los datos enviados y confirmar la carga
         if (mounted) {
+          // Actualizar estado local
           context.read<UserProvider>().setUser(
             id: newUser.id,
             name: newUser.name ?? '',
+            subname: newUser.subname ?? '',
             email: newUser.email ?? '',
-          );
-          
-          // Guardar teléfono y dirección extra en el provider si fuera necesario
-          await context.read<UserProvider>().updateProfile(
-            name: newUser.name ?? '',
-            email: newUser.email ?? '',
-            phone: newUser.phone ?? '',
-            address: newUser.address ?? '',
+            phone: newUser.phone,
+            address: newUser.address,
           );
 
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(
-              builder: (context) => WelcomeScreen(
-                username: _firstNameController.text,
-                isNewAccount: true,
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: const Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.green),
+                  SizedBox(width: 10),
+                  Text('¡Datos Cargados!'),
+                ],
               ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('La siguiente información se ha sincronizado con la tabla "usuarios":', 
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 15),
+                  Text('• Correo: ${newUser.email}'),
+                  Text('• Nombres: ${newUser.name}'),
+                  Text('• Apellidos: ${newUser.subname}'),
+                  Text('• Teléfono: ${newUser.phone}'),
+                  Text('• Dirección: ${newUser.address}'),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context); // Cerrar diálogo
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => WelcomeScreen(
+                          username: _firstNameController.text,
+                          isNewAccount: true,
+                        ),
+                      ),
+                      (route) => false,
+                    );
+                  },
+                  child: const Text('Confirmar y Continuar', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
             ),
-            (route) => false,
           );
         }
       }

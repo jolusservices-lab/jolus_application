@@ -23,6 +23,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isEditing = false;
 
   late TextEditingController _nameController;
+  late TextEditingController _subnameController;
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
   late TextEditingController _addressController;
@@ -37,6 +38,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     final user = Provider.of<UserProvider>(context, listen: false);
     _nameController = TextEditingController(text: user.name);
+    _subnameController = TextEditingController(text: user.subname);
     _emailController = TextEditingController(text: user.email);
     _phoneController = TextEditingController(text: user.phone);
     _addressController = TextEditingController(text: user.address);
@@ -133,6 +135,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _subnameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
     _addressController.dispose();
@@ -273,7 +276,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    _nameController.text,
+                    '${userProvider.name} ${userProvider.subname}',
                     style: GoogleFonts.manrope(
                       fontSize: 24,
                       fontWeight: FontWeight.w800,
@@ -332,6 +335,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           const SizedBox(height: 16),
                           _buildInfoField('Nombres', _nameController, _isEditing),
                           const SizedBox(height: 16),
+                          _buildInfoField('Apellidos', _subnameController, _isEditing),
+                          const SizedBox(height: 16),
                           _buildInfoField('Correo', _emailController, _isEditing),
                           const SizedBox(height: 16),
                           _buildInfoField('Teléfono', _phoneController, _isEditing),
@@ -373,6 +378,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     onPressed: () async {
                                       await Provider.of<UserProvider>(context, listen: false).updateProfile(
                                         name: _nameController.text,
+                                        subname: _subnameController.text,
                                         email: _emailController.text,
                                         phone: _phoneController.text,
                                         address: _addressController.text,

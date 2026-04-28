@@ -43,7 +43,7 @@ class HomeScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  userProvider.id.isEmpty ? 'Jolus Services' : 'Hola, ${userProvider.name}',
+                  userProvider.id.isEmpty ? 'Jolus Services' : 'Hola, ${userProvider.name} ${userProvider.subname}',
                   style: GoogleFonts.manrope(
                     fontWeight: FontWeight.bold,
                     color: JolusColors.primary,

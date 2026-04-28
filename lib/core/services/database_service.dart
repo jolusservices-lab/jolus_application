@@ -40,7 +40,7 @@ class DatabaseService {
 
   Future<UserModel?> getUser(String userId) async {
     try {
-      final data = await _supabase.from('usuarios').select().eq('id', userId).maybeSingle();
+      final data = await _supabase.from('usuarios').select().eq('user_id', userId).maybeSingle();
       if (data != null) return UserModel.fromJson(data);
     } catch (e) {
       print('Error al obtener usuario: $e');
