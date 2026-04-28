@@ -72,8 +72,8 @@ class DatabaseService {
       
       final publicUrl = _supabase.storage.from('avatars').getPublicUrl(fileName);
       
-      // Actualizar la tabla usuarios en la columna 'foto'
-      await _supabase.from('usuarios').update({'foto': publicUrl}).eq('id', userId);
+      // Actualizar la tabla usuarios en la columna 'foto' (usando user_id)
+      await _supabase.from('usuarios').update({'foto': publicUrl}).eq('user_id', userId);
       
       return publicUrl;
     } catch (e) {
