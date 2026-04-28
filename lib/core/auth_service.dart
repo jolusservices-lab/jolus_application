@@ -17,8 +17,8 @@ class AuthService {
       }
 
       // Flujo nativo para Android/iOS (requiere google_sign_in)
-      const webClientId = 'TU_WEB_CLIENT_ID.apps.googleusercontent.com';
-      const iosClientId = 'TU_IOS_CLIENT_ID.apps.googleusercontent.com';
+      const webClientId = '263098935601-sqajrf72d84tq0ili7f0ar11a54v7igk.apps.googleusercontent.com';
+      const iosClientId = '263098935601-v9usisiabaemj9gtmrnerr8m6uct05q2.apps.googleusercontent.com';
 
       final GoogleSignIn googleSignIn = GoogleSignIn(
         clientId: Platform.isIOS ? iosClientId : webClientId,
