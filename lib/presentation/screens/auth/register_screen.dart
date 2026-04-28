@@ -45,10 +45,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     try {
       final supabase = Supabase.instance.client;
+      final dbService = DatabaseService();
+      final email = _emailController.text.trim();
+
+      // 1. Validar si el correo ya existe en la tabla 'usuarios'
+      final bool exists = await dbService.checkEmailExists(email);
+      if (exists) {
+        _showError('Este correo electrónico ya está registrado. Por favor, utiliza otro.');
+        return;
+      }
       
-      // 1. Crear usuario en Supabase Auth
+      // 2. Crear usuario en Supabase Auth
       final AuthResponse res = await supabase.auth.signUp(
-        email: _emailController.text.trim(),
+        email: email,
         password: _passwordController.text.trim(),
         data: {
           'full_name': '${_firstNameController.text} ${_lastNameController.text}',

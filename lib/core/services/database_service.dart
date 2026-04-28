@@ -30,6 +30,19 @@ class DatabaseService {
   }
 
   // --- USUARIOS ---
+  Future<bool> checkEmailExists(String email) async {
+    try {
+      final response = await _supabase
+          .from('usuarios')
+          .select('correo')
+          .eq('correo', email)
+          .maybeSingle();
+      return response != null;
+    } catch (e) {
+      return false;
+    }
+  }
+
   Future<void> syncUser(UserModel user) async {
     try {
       await _supabase.from('usuarios').upsert(user.toJson());
