@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as path;
 import '../../core/theme/colors.dart';
 import '../../core/providers/user_provider.dart';
+import '../../core/providers/navigation_provider.dart';
 import '../../core/services/database_service.dart';
 import '../widgets/main_navigation.dart';
 import 'auth/login_screen.dart';
@@ -531,15 +532,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             // Cerrar Sesión
             TextButton.icon(
               onPressed: () async {
-                // Limpiar datos del usuario y resetear navegación al Home (índice 0)
+                // Limpiar datos del usuario
                 userProvider.clearUser();
-                Provider.of<NavigationProvider>(context, listen: false).setSelectedIndex(0);
                 
                 // Cerrar sesión en Supabase
                 await Supabase.instance.client.auth.signOut();
                 
                 if (mounted) {
-                  // Navegar al Login eliminando todo el historial de rutas
+                  // Navegar al Login directamente
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(builder: (context) => const LoginScreen()),
