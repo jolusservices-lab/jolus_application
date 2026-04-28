@@ -68,6 +68,10 @@ class _JolusAppState extends State<JolusApp> {
         WidgetsBinding.instance.addPostFrameCallback((_) async {
           if (mounted) {
             final userProvider = Provider.of<UserProvider>(context, listen: false);
+            final navProvider = Provider.of<NavigationProvider>(context, listen: false);
+            
+            // Asegurar que siempre inicie en el Home (índice 0)
+            navProvider.setSelectedIndex(0);
             
             // Priorizar datos de la tabla 'usuarios' para evitar nombres mezclados
             final dbUser = await DatabaseService().getUser(session.user.id);

@@ -530,10 +530,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             // Cerrar Sesión
             TextButton.icon(
-              onPressed: () => Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-              ),
+              onPressed: () async {
+                // Limpiar datos del usuario y resetear navegación al Home (índice 0)
+                userProvider.clearUser();
+                Provider.of<NavigationProvider>(context, listen: false).setSelectedIndex(0);
+                
+                // Cerrar sesión en Supabase
+                await Supabase.instance.client.auth.signOut();
+                
+                if (mounted) {
+                  // Navegar al Login eliminando todo el historial de rutas
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                    (route) => false,
+                  );
+                }
+              },
               icon: const Icon(Icons.logout, color: Colors.red),
               label: Text(
                 'Cerrar Sesión',
