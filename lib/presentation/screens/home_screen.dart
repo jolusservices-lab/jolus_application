@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/colors.dart';
 import '../../core/models/service_model.dart';
 import '../../core/providers/navigation_provider.dart';
+import '../../core/providers/user_provider.dart';
 import '../widgets/category_carousel.dart';
 import '../widgets/service_card.dart';
 
@@ -13,6 +14,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final navProvider = context.read<NavigationProvider>();
+    final userProvider = context.watch<UserProvider>();
 
     return Scaffold(
       backgroundColor: JolusColors.background,
@@ -23,21 +25,40 @@ class HomeScreen extends StatelessWidget {
             backgroundColor: Colors.white,
             surfaceTintColor: Colors.white,
             elevation: 0,
-            leading: const Padding(
-              padding: EdgeInsets.only(left: 16.0),
+            leading: Padding(
+              padding: const EdgeInsets.only(left: 16.0),
               child: CircleAvatar(
                 radius: 18,
                 backgroundColor: JolusColors.surfaceLow,
-                child: Icon(Icons.person, color: JolusColors.primary, size: 20),
+                backgroundImage: userProvider.photoUrl != null 
+                    ? NetworkImage(userProvider.photoUrl!) 
+                    : null,
+                child: userProvider.photoUrl == null 
+                    ? const Icon(Icons.person, color: JolusColors.primary, size: 20)
+                    : null,
               ),
             ),
-            title: Text(
-              'Jolus Services',
-              style: GoogleFonts.manrope(
-                fontWeight: FontWeight.bold,
-                color: JolusColors.primary,
-                fontSize: 18,
-              ),
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  userProvider.id.isEmpty ? 'Jolus Services' : 'Hola, ${userProvider.name}',
+                  style: GoogleFonts.manrope(
+                    fontWeight: FontWeight.bold,
+                    color: JolusColors.primary,
+                    fontSize: 16,
+                  ),
+                ),
+                Text(
+                  userProvider.id.isEmpty ? 'Bienvenido a nuestra plataforma' : '¿Qué servicio necesitas hoy?',
+                  style: GoogleFonts.inter(
+                    color: JolusColors.onSurfaceVariant.withOpacity(0.6),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
             actions: [
               IconButton(
