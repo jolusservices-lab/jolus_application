@@ -48,6 +48,27 @@ class DatabaseService {
     return null;
   }
 
+  Future<String?> uploadUserPhoto(String userId, dynamic fileBytes, String extension) async {
+    try {
+      final fileName = '$userId/avatar_${DateTime.now().millisecondsSinceEpoch}.$extension';
+      final path = await _supabase.storage.from('avatars').uploadBinary(
+        fileName,
+        fileBytes,
+        fileOptions: const FileOptions(upsert: true),
+      );
+      
+      final publicUrl = _supabase.storage.from('avatars').getPublicUrl(fileName);
+      
+      // Actualizar la tabla usuarios en la columna 'foto'
+      await _supabase.from('usuarios').update({'foto': publicUrl}).eq('id', userId);
+      
+      return publicUrl;
+    } catch (e) {
+      print('Error al subir foto de usuario: $e');
+      return null;
+    }
+  }
+
   // --- CARRITO ---
   Future<void> syncCart(String userId, List<CartItem> items) async {
     try {

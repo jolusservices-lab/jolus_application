@@ -2,6 +2,7 @@ class UserModel {
   final String id;
   final String email;
   final String? name;
+  final String? subname;
   final String? phone;
   final String? address;
   final String? photoUrl;
@@ -10,6 +11,7 @@ class UserModel {
     required this.id,
     required this.email,
     this.name,
+    this.subname,
     this.phone,
     this.address,
     this.photoUrl,
@@ -18,22 +20,24 @@ class UserModel {
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
       id: json['id'] ?? '',
-      email: json['correo_electronico'] ?? json['email'] ?? '',
-      name: json['nombre_apellido'] ?? json['name'],
+      email: json['correo'] ?? json['email'] ?? '',
+      name: json['nombres'] ?? json['name'],
+      subname: json['apellidos'] ?? json['subname'],
       phone: json['telefono'] ?? json['phone'],
       address: json['direccion'] ?? json['address'],
-      photoUrl: json['url_foto'] ?? json['photo_url'],
+      photoUrl: json['foto'] ?? json['photo_url'],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'correo_electronico': email,
-      'nombre_apellido': name,
+      'correo': email,
+      'nombres': name,
+      'apellidos': subname,
       'telefono': phone,
       'direccion': address,
-      'url_foto': photoUrl,
+      'foto': photoUrl,
     };
   }
 }

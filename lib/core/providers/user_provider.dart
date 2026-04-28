@@ -112,6 +112,13 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> updatePhotoUrl(String photoUrl) async {
+    _photoUrl = photoUrl;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_photo_url', photoUrl);
+    notifyListeners();
+  }
+
   void clearUser() async {
     _id = '';
     _name = 'Invitado';

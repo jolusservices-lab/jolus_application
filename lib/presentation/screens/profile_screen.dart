@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as path;
 import '../../core/theme/colors.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/services/database_service.dart';
@@ -137,8 +139,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
+  Future<void> _pickAndUploadImage() async {
+    final ImagePicker picker = ImagePicker();
+    try {
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70,
+      );
+
+      if (image == null) return;
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Subiendo imagen...'), duration: Duration(seconds: 2)),
+        );
+      }
+
+      final bytes = await image.readAsBytes();
+      final extension = path.extension(image.path).replaceAll('.', '');
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      
+      final publicUrl = await DatabaseService().uploadUserPhoto(
+        userProvider.id,
+        bytes,
+        extension,
+      );
+
+      if (publicUrl != null && mounted) {
+        await userProvider.updatePhotoUrl(publicUrl);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Foto de perfil actualizada')),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error al cambiar foto: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al subir la imagen: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+    final photoUrl = userProvider.photoUrl;
+
     return Scaffold(
       backgroundColor: JolusColors.background,
       appBar: AppBar(
@@ -164,11 +211,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onPressed: () {},
             icon: const Icon(Icons.notifications_outlined, color: JolusColors.primary),
           ),
-          const Padding(
-            padding: EdgeInsets.only(right: 12),
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
             child: CircleAvatar(
               radius: 16,
-              backgroundImage: NetworkImage('https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200'),
+              backgroundImage: (photoUrl != null && photoUrl.isNotEmpty)
+                  ? NetworkImage(photoUrl)
+                  : const NetworkImage('https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png'),
             ),
           ),
         ],
@@ -183,33 +232,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   Stack(
                     children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 4),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
-                            )
-                          ],
-                        ),
-                        child: const CircleAvatar(
-                          radius: 65,
-                          backgroundImage: NetworkImage('https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=400'),
+                      GestureDetector(
+                        onTap: _pickAndUploadImage,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 4),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
+                              )
+                            ],
+                          ),
+                          child: CircleAvatar(
+                            radius: 65,
+                            backgroundImage: (photoUrl != null && photoUrl.isNotEmpty)
+                                ? NetworkImage(photoUrl)
+                                : const NetworkImage('https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png'),
+                          ),
                         ),
                       ),
                       Positioned(
                         bottom: 4,
                         right: 4,
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF00236F),
-                            shape: BoxShape.circle,
+                        child: GestureDetector(
+                          onTap: _pickAndUploadImage,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF00236F),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.edit, color: Colors.white, size: 18),
                           ),
-                          child: const Icon(Icons.edit, color: Colors.white, size: 18),
                         ),
                       ),
                     ],
