@@ -11,7 +11,7 @@ class HistoryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final orderProvider = Provider.of<OrderProvider>(context);
     final orders = orderProvider.orders;
-    final double totalSpent = orders.fold(0, (sum, item) => sum + item.amount);
+    final double totalSpent = orders.fold(0, (sum, item) => sum + item.total);
 
     return Scaffold(
       backgroundColor: JolusColors.background,
@@ -97,11 +97,11 @@ class HistoryScreen extends StatelessWidget {
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 16),
                           child: _buildHistoryItem(
-                            title: order.products.first.title + (order.products.length > 1 ? ' +${order.products.length - 1}' : ''),
-                            date: "${order.dateTime.day}/${order.dateTime.month}/${order.dateTime.year}",
-                            price: '\$${order.amount.toStringAsFixed(2)}',
-                            status: 'Completado',
-                            statusColor: Colors.green,
+                            title: 'Pedido #${order.id?.substring(0, 8) ?? '---'}',
+                            date: "${order.fecha.day}/${order.fecha.month}/${order.fecha.year}",
+                            price: '\$${order.total.toStringAsFixed(2)}',
+                            status: order.estado,
+                            statusColor: order.estado == 'completado' ? Colors.green : Colors.orange,
                             icon: Icons.shopping_bag_outlined,
                             actionText: 'Ver detalles >',
                           ),

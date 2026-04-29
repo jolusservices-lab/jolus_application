@@ -65,7 +65,43 @@ class _CartScreenState extends State<CartScreen> {
     ];
   }
 
-  Future<void> _sendWhatsAppMessage(BuildContext context, CartProvider cart, UserProvider user) async {
+  Future<void> _processCheckout(BuildContext context, CartProvider cart, UserProvider user, OrderProvider orderProvider) async {
+    final double total = cart.totalAmount * 1.07 + 5.0;
+    
+    // 1. Crear el pedido en Supabase
+    final String? pedidoId = await orderProvider.placeOrder(
+      userId: user.id,
+      total: total,
+      items: cart.items.values.toList(),
+      direccion: user.address,
+      metodoPago: _paymentMethod,
+      telefono: user.phone,
+      comentario: 'Agendado para ${_getFormattedFullDate()} a las $_selectedTime',
+    );
+
+    if (pedidoId != null) {
+      if (_paymentMethod == 'Transferencia') {
+        // Ir a subir el comprobante
+        if (!context.mounted) return;
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PaymentDetailScreen(orderId: pedidoId, total: total),
+          ),
+        );
+      } else {
+        // Flujo WhatsApp para otros métodos
+        _sendWhatsAppMessage(context, cart, user, pedidoId);
+      }
+    } else {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error al procesar el pedido. Intente de nuevo.')),
+      );
+    }
+  }
+
+  Future<void> _sendWhatsAppMessage(BuildContext context, CartProvider cart, UserProvider user, String pedidoId) async {
     final String itemsDetail = cart.items.values
         .map((item) => '${item.quantity}x ${item.title}')
         .join(', ');
@@ -74,6 +110,7 @@ class _CartScreenState extends State<CartScreen> {
     
     final String message = '''
 NUEVO PEDIDO - JOLUS SERVICES
+Pedido ID: $pedidoId
 Cliente: ${user.name}
 Entrega en: ${user.address}
 Fecha de Servicio: ${_getFormattedFullDate()}
@@ -82,27 +119,11 @@ Detalle: $itemsDetail
 Total: \$${total.toStringAsFixed(2)} USD
 ''';
 
-    // Guardar el pedido localmente en el historial
-    await Provider.of<OrderProvider>(context, listen: false).addOrder(
-      cart.items.values.toList(),
-      total,
-      serviceDate: _getFormattedFullDate(),
-      serviceTime: _selectedTime,
-      userEmail: user.email,
-      userName: user.name,
-    );
-
     final Uri url = Uri.parse("https://wa.me/593992512048?text=${Uri.encodeComponent(message)}");
     
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
       cart.clear();
-    } else {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se pudo abrir WhatsApp')),
-        );
-      }
     }
   }
 
@@ -110,6 +131,7 @@ Total: \$${total.toStringAsFixed(2)} USD
   Widget build(BuildContext context) {
     final cart = Provider.of<CartProvider>(context);
     final user = Provider.of<UserProvider>(context);
+    final orderProvider = Provider.of<OrderProvider>(context);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FE),
@@ -426,26 +448,21 @@ Total: \$${total.toStringAsFixed(2)} USD
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
-                      onPressed: () {
-                        if (_paymentMethod == 'Transferencia') {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const PaymentDetailScreen()),
-                          );
-                        } else {
-                          _sendWhatsAppMessage(context, cart, user);
-                        }
-                      },
+                      onPressed: orderProvider.isLoading 
+                        ? null 
+                        : () => _processCheckout(context, cart, user, orderProvider),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF001F60),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         elevation: 0,
                       ),
-                      child: Text(
-                        'Proceder a Pagar',
-                        style: GoogleFonts.manrope(fontSize: 15, fontWeight: FontWeight.bold),
-                      ),
+                      child: orderProvider.isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : Text(
+                            'Proceder a Pagar',
+                            style: GoogleFonts.manrope(fontSize: 15, fontWeight: FontWeight.bold),
+                          ),
                     ),
                   ),
                   const SizedBox(height: 16),

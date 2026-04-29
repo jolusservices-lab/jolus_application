@@ -80,8 +80,8 @@ class _JolusAppState extends State<JolusApp> {
               userProvider.setUser(
                 id: dbUser.id,
                 name: dbUser.name ?? '',
-                subname: dbUser.subname ?? '',
-                email: dbUser.email ?? '',
+                email: dbUser.email,
+                subname: dbUser.subname,
                 photoUrl: dbUser.photoUrl,
                 phone: dbUser.phone,
                 address: dbUser.address,

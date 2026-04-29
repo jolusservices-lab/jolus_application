@@ -91,10 +91,10 @@ class DatabaseService {
       final cartData = items.map((item) => {
         'user_id': userId,
         'producto_id': item.id,
-        'nombre': item.title,
+        'nombre_producto': item.title,
         'cantidad': item.quantity,
         'precio': item.price,
-        'imagen_url': item.imageUrl,
+        'imagen': item.imageUrl,
       }).toList();
 
       if (cartData.isNotEmpty) {
@@ -105,12 +105,83 @@ class DatabaseService {
     }
   }
 
+  // --- PEDIDOS ---
+  Future<String?> createOrder({
+    required String userId,
+    required double total,
+    required List<CartItem> items,
+    String? direccion,
+    String? metodoPago,
+    String? telefono,
+    String? comentario,
+  }) async {
+    try {
+      // 1. Insertar el pedido (cabecera)
+      final orderResponse = await _supabase.from('pedidos').insert({
+        'user_id': userId,
+        'total': total,
+        'direccion_entrega': direccion,
+        'metodo_pago': metodoPago,
+        'telefono_contacto': telefono,
+        'comentario': comentario,
+      }).select().single();
+
+      final String pedidoId = orderResponse['id'];
+
+      // 2. Insertar los items del pedido
+      final List<Map<String, dynamic>> itemsData = items.map((item) => {
+        'pedido_id': pedidoId,
+        'producto_id': item.id,
+        'nombre_producto': item.title,
+        'cantidad': item.quantity,
+        'precio_unitario': item.price,
+      }).toList();
+
+      await _supabase.from('pedido_items').insert(itemsData);
+
+      return pedidoId;
+    } catch (e) {
+      print('Error al crear pedido en Supabase: $e');
+      return null;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getUserOrders(String userId) async {
+    try {
+      return await _supabase
+          .from('pedidos')
+          .select('*, pedido_items(*)')
+          .eq('user_id', userId)
+          .order('fecha', ascending: false);
+    } catch (e) {
+      print('Error al obtener historial de pedidos: $e');
+      return [];
+    }
+  }
+
   // --- COMPROBANTES DE PAGOS ---
+  Future<String?> uploadReceiptFile(String orderId, dynamic fileBytes, String extension) async {
+    try {
+      final fileName = '$orderId/receipt_${DateTime.now().millisecondsSinceEpoch}.$extension';
+      await _supabase.storage.from('comprobantes').uploadBinary(
+        fileName,
+        fileBytes,
+        fileOptions: const FileOptions(upsert: true),
+      );
+      
+      return _supabase.storage.from('comprobantes').getPublicUrl(fileName);
+    } catch (e) {
+      print('Error al subir archivo de comprobante: $e');
+      return null;
+    }
+  }
+
   Future<void> uploadPaymentReceipt(PaymentReceiptModel receipt) async {
     try {
       await _supabase.from('comprobantesPagos').insert(receipt.toJson());
     } catch (e) {
-      print('Error al subir comprobante: $e');
+      print('Error al registrar comprobante en DB: $e');
+      rethrow;
     }
   }
 

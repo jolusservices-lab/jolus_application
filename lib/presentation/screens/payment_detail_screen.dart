@@ -1,19 +1,133 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../core/providers/cart_provider.dart';
 import '../../core/providers/user_provider.dart';
+import '../../core/services/database_service.dart';
+import '../../core/models/payment_receipt_model.dart';
 import '../widgets/main_navigation.dart';
 
-class PaymentDetailScreen extends StatelessWidget {
-  const PaymentDetailScreen({super.key});
+class PaymentDetailScreen extends StatefulWidget {
+  final String orderId;
+  final double total;
+
+  const PaymentDetailScreen({
+    super.key,
+    required this.orderId,
+    required this.total,
+  });
+
+  @override
+  State<PaymentDetailScreen> createState() => _PaymentDetailScreenState();
+}
+
+class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
+  final _dbService = DatabaseService();
+  final _nameController = TextEditingController();
+  final _idController = TextEditingController();
+  final _bankController = TextEditingController();
+  final _emailController = TextEditingController();
+  
+  XFile? _imageFile;
+  bool _isUploading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-llenar datos del usuario si están disponibles
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final user = Provider.of<UserProvider>(context, listen: false);
+      _nameController.text = user.name;
+      _emailController.text = user.email;
+    });
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _idController.dispose();
+    _bankController.dispose();
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 70,
+    );
+    
+    if (image != null) {
+      setState(() {
+        _imageFile = image;
+      });
+    }
+  }
+
+  Future<void> _submitPayment() async {
+    if (_imageFile == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, suba una foto del comprobante.')),
+      );
+      return;
+    }
+
+    setState(() => _isUploading = true);
+
+    try {
+      final user = Provider.of<UserProvider>(context, listen: false);
+      final cart = Provider.of<CartProvider>(context, listen: false);
+      
+      final bytes = await _imageFile!.readAsBytes();
+      final extension = _imageFile!.path.split('.').last;
+      
+      // 1. Subir el archivo al bucket
+      final publicUrl = await _dbService.uploadReceiptFile(
+        widget.orderId,
+        bytes,
+        extension,
+      );
+
+      if (publicUrl == null) throw Exception('Error al subir imagen');
+
+      // 2. Registrar en la base de datos
+      final receipt = PaymentReceiptModel(
+        orderId: widget.orderId,
+        userId: user.id,
+        amount: widget.total,
+        receiptUrl: publicUrl,
+        paymentDate: DateTime.now(),
+      );
+
+      await _dbService.uploadPaymentReceipt(receipt);
+
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pago reportado con éxito. Procesando verificación.')),
+      );
+      
+      cart.clear();
+      
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const MainNavigation()),
+        (route) => false,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al reportar pago: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final cart = Provider.of<CartProvider>(context);
-    // final user = Provider.of<UserProvider>(context); // Not used in original snippet but imported
-    final total = cart.totalAmount * 1.07 + 5.0;
-
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FE),
       appBar: AppBar(
@@ -94,45 +208,68 @@ class PaymentDetailScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  _buildReportField('Nombre Completo', 'Ej: Juan Pérez'),
+                  _buildReportField('Nombre Completo', 'Ej: Juan Pérez', controller: _nameController),
                   const SizedBox(height: 16),
-                  _buildReportField('Número de Identificación', 'Cédula o Pasaporte'),
+                  _buildReportField('Número de Identificación', 'Cédula o Pasaporte', controller: _idController),
                   const SizedBox(height: 16),
-                  _buildReportField('Fecha de Pago', 'mm/dd/yyyy', suffixIcon: Icons.calendar_today_outlined),
+                  _buildReportField('Fecha de Pago', 'Hoy', suffixIcon: Icons.calendar_today_outlined, enabled: false),
                   const SizedBox(height: 16),
-                  _buildReportField('Nombre del Banco', 'Banco emisor'),
+                  _buildReportField('Nombre del Banco', 'Banco emisor', controller: _bankController),
                   const SizedBox(height: 16),
-                  _buildReportField('Correo Electrónico', 'usuario@ejemplo.com'),
+                  _buildReportField('Correo Electrónico', 'usuario@ejemplo.com', controller: _emailController),
                   const SizedBox(height: 16),
-                  _buildReportField('Monto Pagado', '\$ ${total.toStringAsFixed(2)}'),
+                  _buildReportField('Monto Pagado', '\$ ${widget.total.toStringAsFixed(2)}', enabled: false),
                   const SizedBox(height: 24),
                   Text(
                     'Recibo de Pago',
                     style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey[700]),
                   ),
                   const SizedBox(height: 12),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 32),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF4F6FC),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.blue.withOpacity(0.2), style: BorderStyle.solid),
-                    ),
-                    child: Column(
-                      children: [
-                        const Icon(Icons.cloud_upload_rounded, color: Color(0xFF00236F), size: 32),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Subir comprobante',
-                          style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF00236F)),
+                  GestureDetector(
+                    onTap: _isUploading ? null : _pickImage,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 32),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF4F6FC),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: _imageFile != null ? Colors.green : Colors.blue.withOpacity(0.2), 
+                          style: BorderStyle.solid
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Soporta JPG, PNG o PDF (Máx. 5MB)',
-                          style: GoogleFonts.inter(fontSize: 11, color: Colors.grey[500]),
-                        ),
-                      ],
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(
+                            _imageFile != null ? Icons.check_circle_rounded : Icons.cloud_upload_rounded, 
+                            color: _imageFile != null ? Colors.green : const Color(0xFF00236F), 
+                            size: 32
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            _imageFile != null ? 'Comprobante seleccionado' : 'Subir comprobante',
+                            style: GoogleFonts.inter(
+                              fontSize: 14, 
+                              fontWeight: FontWeight.bold, 
+                              color: _imageFile != null ? Colors.green : const Color(0xFF00236F)
+                            ),
+                          ),
+                          if (_imageFile != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text(
+                                _imageFile!.name,
+                                style: GoogleFonts.inter(fontSize: 11, color: Colors.grey[600]),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Soporta JPG, PNG (Máx. 5MB)',
+                            style: GoogleFonts.inter(fontSize: 11, color: Colors.grey[500]),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -175,26 +312,19 @@ class PaymentDetailScreen extends StatelessWidget {
               width: double.infinity,
               height: 56,
               child: ElevatedButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Pago reportado con éxito. Procesando verificación.')),
-                  );
-                  cart.clear();
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => const MainNavigation()),
-                    (route) => false,
-                  );
-                },
+                onPressed: _isUploading ? null : _submitPayment,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF001F60),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   elevation: 0,
                 ),
-                child: Text(
-                  'Enviar Pago',
-                  style: GoogleFonts.manrope(fontSize: 15, fontWeight: FontWeight.bold),
-                ),
+                child: _isUploading
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : Text(
+                      'Enviar Pago',
+                      style: GoogleFonts.manrope(fontSize: 15, fontWeight: FontWeight.bold),
+                    ),
               ),
             ),
             const SizedBox(height: 40),
@@ -265,7 +395,7 @@ class PaymentDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildReportField(String label, String hint, {IconData? suffixIcon}) {
+  Widget _buildReportField(String label, String hint, {IconData? suffixIcon, TextEditingController? controller, bool enabled = true}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -275,12 +405,14 @@ class PaymentDetailScreen extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         TextField(
+          controller: controller,
+          enabled: enabled,
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14),
             suffixIcon: suffixIcon != null ? Icon(suffixIcon, size: 18, color: Colors.grey[400]) : null,
             filled: true,
-            fillColor: Colors.white,
+            fillColor: enabled ? Colors.white : Colors.grey[100],
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
