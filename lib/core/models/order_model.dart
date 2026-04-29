@@ -22,9 +22,9 @@ class OrderModel {
   });
 
   factory OrderModel.fromJson(Map<String, dynamic> json) => OrderModel(
-    id: json['id'],
+    id: json['id']?.toString(),
     userId: json['user_id'],
-    fecha: DateTime.parse(json['fecha']),
+    fecha: json['fecha'] != null ? DateTime.parse(json['fecha']) : DateTime.now(),
     total: (json['total'] as num).toDouble(),
     estado: json['estado'] ?? 'pendiente',
     direccionEntrega: json['direccion_entrega'],

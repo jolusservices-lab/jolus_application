@@ -126,11 +126,11 @@ class DatabaseService {
         'comentario': comentario,
       }).select().single();
 
-      final String pedidoId = orderResponse['id'];
+      final String pedidoId = orderResponse['id'].toString();
 
       // 2. Insertar los items del pedido
       final List<Map<String, dynamic>> itemsData = items.map((item) => {
-        'pedido_id': pedidoId,
+        'pedido_id': int.parse(pedidoId),
         'producto_id': item.id,
         'nombre_producto': item.title,
         'cantidad': item.quantity,

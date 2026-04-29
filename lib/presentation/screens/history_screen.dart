@@ -94,10 +94,11 @@ class HistoryScreen extends StatelessWidget {
                     )
                   : Column(
                       children: orders.map((order) {
+                        final String displayId = order.id?.toString() ?? '---';
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 16),
                           child: _buildHistoryItem(
-                            title: 'Pedido #${order.id?.substring(0, 8) ?? '---'}',
+                            title: 'Pedido #$displayId',
                             date: "${order.fecha.day}/${order.fecha.month}/${order.fecha.year}",
                             price: '\$${order.total.toStringAsFixed(2)}',
                             status: order.estado,

@@ -86,8 +86,11 @@ class _JolusAppState extends State<JolusApp> {
                 phone: dbUser.phone,
                 address: dbUser.address,
               );
+              // Cargar pedidos inmediatamente después de sincronizar el usuario
+              Provider.of<OrderProvider>(context, listen: false).fetchOrders(dbUser.id);
             } else {
               userProvider.syncWithSupabaseUser(session.user);
+              Provider.of<OrderProvider>(context, listen: false).fetchOrders(session.user.id);
             }
             
             print('DEBUG AUTH: Usuario sincronizado desde la BD tras login');
