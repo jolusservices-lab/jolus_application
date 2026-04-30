@@ -112,14 +112,6 @@ class _CategoryCardState extends State<CategoryCard> {
             ..scale(_isHovered ? 1.03 : 1.0),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
-            image: DecorationImage(
-              image: NetworkImage(widget.imageUrl),
-              fit: BoxFit.cover,
-              colorFilter: ColorFilter.mode(
-                Colors.black.withOpacity(_isHovered ? 0.2 : 0.4),
-                BlendMode.darken,
-              ),
-            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(_isHovered ? 0.15 : 0.08),
@@ -131,7 +123,35 @@ class _CategoryCardState extends State<CategoryCard> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(24),
             child: Stack(
+              fit: StackFit.expand,
               children: [
+                Image.network(
+                  widget.imageUrl,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      color: Colors.grey[200],
+                      child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    color: Colors.grey[300],
+                    child: const Icon(Icons.broken_image, color: Colors.grey),
+                  ),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withOpacity(_isHovered ? 0.4 : 0.6),
+                      ],
+                    ),
+                  ),
+                ),
                 Center(
                   child: Text(
                     widget.label,

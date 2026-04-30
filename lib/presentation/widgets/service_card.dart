@@ -67,13 +67,25 @@ class _AnimatedServiceCardState extends State<_AnimatedServiceCard> {
                 children: [
                   Hero(
                     tag: 'service_image_${widget.service.id}',
-                    child: Container(
-                      height: 200,
-                      decoration: BoxDecoration(
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                        image: DecorationImage(
-                          image: NetworkImage(widget.service.imagen ?? 'https://via.placeholder.com/400'),
-                          fit: BoxFit.cover,
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                      child: Image.network(
+                        widget.service.imagen ?? 'https://via.placeholder.com/400',
+                        height: 200,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            height: 200,
+                            color: Colors.grey[100],
+                            child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          height: 200,
+                          color: Colors.grey[200],
+                          child: const Icon(Icons.broken_image, color: Colors.grey),
                         ),
                       ),
                     ),

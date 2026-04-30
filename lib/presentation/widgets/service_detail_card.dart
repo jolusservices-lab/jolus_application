@@ -67,38 +67,50 @@ class _AnimatedServiceDetailCardState extends State<_AnimatedServiceDetailCard> 
                 children: [
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                    child: Hero(
+                      child: Hero(
                       tag: 'service_detail_image_${widget.service.id}',
                       child: Image.network(
                         widget.service.imagen ?? 'https://via.placeholder.com/400',
-                        height: 180,
+                        height: 150, // Reducido de 180 a 150 para que no sea tan grande
                         width: double.infinity,
-                        fit: BoxFit.cover,
+                        fit: BoxFit.contain, // Cambiado a contain para que la imagen se vea completa sin cortes
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            height: 150,
+                            color: Colors.grey[100],
+                            child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          height: 150,
+                          color: Colors.grey[200],
+                          child: const Icon(Icons.broken_image, color: Colors.grey),
+                        ),
                       ),
                     ),
                   ),
                   Positioned(
-                    top: 16,
-                    left: 16,
+                    top: 12,
+                    left: 12,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
-                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.white.withOpacity(0.95),
+                        borderRadius: BorderRadius.circular(6),
                         boxShadow: [
-                          if (_isHovered)
-                            BoxShadow(
-                              color: JolusColors.primary.withOpacity(0.2),
-                              blurRadius: 8,
-                            )
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 4,
+                          )
                         ],
                       ),
                       child: Text(
                         widget.service.categoria.toUpperCase(),
                         style: GoogleFonts.inter(
-                          fontSize: 10,
+                          fontSize: 9,
                           fontWeight: FontWeight.w800,
-                          letterSpacing: 1.0,
+                          letterSpacing: 0.8,
                           color: JolusColors.primary,
                         ),
                       ),
@@ -107,48 +119,48 @@ class _AnimatedServiceDetailCardState extends State<_AnimatedServiceDetailCard> 
                 ],
               ),
               Padding(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(16), // Reducido el padding para compactar
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       widget.service.nombre,
                       style: GoogleFonts.manrope(
-                        fontSize: 20,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: JolusColors.primary,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                     Text(
                       widget.service.descripcion,
-                      maxLines: 2,
+                      maxLines: 1, // Reducido a 1 línea para ahorrar espacio
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
                         color: Colors.grey[600],
-                        fontSize: 14,
-                        height: 1.4,
+                        fontSize: 13,
+                        height: 1.3,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     Row(
                       children: [
-                        const Icon(Icons.inventory_2_outlined, size: 16, color: Colors.grey),
-                        const SizedBox(width: 6),
+                        const Icon(Icons.inventory_2_outlined, size: 14, color: Colors.grey),
+                        const SizedBox(width: 4),
                         Text(
                           'Disponible: ${widget.service.cantidad}',
                           style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[700]),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           '\$${widget.service.precio.toStringAsFixed(2)}',
                           style: GoogleFonts.manrope(
-                            fontSize: 22,
+                            fontSize: 20,
                             fontWeight: FontWeight.w800,
                             color: JolusColors.primary,
                           ),
@@ -173,10 +185,16 @@ class _AnimatedServiceDetailCardState extends State<_AnimatedServiceDetailCard> 
                             backgroundColor: JolusColors.primary,
                             foregroundColor: Colors.white,
                             elevation: _isHovered ? 4 : 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                           ),
-                          child: const Text('Reservar', style: TextStyle(fontWeight: FontWeight.bold)),
+                          child: Text(
+                            'Añadir al carrito', // Cambiado de 'Reservar' a 'Añadir al carrito'
+                            style: GoogleFonts.manrope(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
                         ),
                       ],
                     ),
