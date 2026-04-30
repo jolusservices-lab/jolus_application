@@ -531,6 +531,8 @@ Total: \$${total.toStringAsFixed(2)} USD
             ),
             const SizedBox(height: 16),
 
+            // Opción de Tarjeta oculta por el momento
+            /*
             _buildPaymentOption(
               icon: Icons.credit_card,
               title: 'Tarjeta de Crédito/Débito',
@@ -539,6 +541,7 @@ Total: \$${total.toStringAsFixed(2)} USD
               onTap: () => setState(() => _paymentMethod = 'Tarjeta'),
             ),
             const SizedBox(height: 12),
+            */
             _buildPaymentOption(
               icon: Icons.account_balance,
               title: 'Transferencia Bancaria',
