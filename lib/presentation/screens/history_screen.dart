@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/colors.dart';
 import '../../core/providers/order_provider.dart';
+import '../../core/models/order_model.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -30,6 +31,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final double totalSpent = orderProvider.orders
         .where((o) => o.estado.toLowerCase() == 'completado')
         .fold(0, (sum, item) => sum + item.total);
+
+    final int completedCount = orderProvider.orders.where((o) => o.estado.toLowerCase() == 'completado').length;
+    final int cancelledCount = orderProvider.orders.where((o) => o.estado.toLowerCase() == 'anulado' || o.estado.toLowerCase() == 'cancelado').length;
 
     return Scaffold(
       backgroundColor: JolusColors.background,
@@ -62,9 +66,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 children: [
                   _buildStatCard('Total Invertido', '\$${totalSpent.toStringAsFixed(2)}'),
                   const SizedBox(width: 12),
-                  _buildStatCard('Compras Totales', '${orderProvider.orders.length}'),
+                  _buildStatCard('Completados', '$completedCount', color: Colors.green),
                   const SizedBox(width: 12),
-                  _buildStatCard('En Proceso', '${orderProvider.orders.where((o) => o.estado.toLowerCase() == 'pendiente').length}'),
+                  _buildStatCard('Anulados', '$cancelledCount', color: Colors.red),
                 ],
               ),
             ),
@@ -122,6 +126,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 16),
                           child: _buildHistoryItem(
+                            order: order,
                             title: 'Pedido #$displayId',
                             date: "${order.fecha.day}/${order.fecha.month}/${order.fecha.year}",
                             price: '\$${order.total.toStringAsFixed(2)}',
@@ -135,79 +140,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     ),
             ),
             const SizedBox(height: 24),
-
-            // Loyalty Banner
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: JolusColors.primary,
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        'LOYALTY REWARD',
-                        style: GoogleFonts.inter(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      '¡Gracias por tu confianza!',
-                      style: GoogleFonts.manrope(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Obtén beneficios exclusivos por ser un cliente recurrente de Jolus Services.',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.inter(
-                        color: Colors.white.withOpacity(0.8),
-                        fontSize: 13,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: JolusColors.primary,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        'Más información',
-                        style: GoogleFonts.manrope(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildStatCard(String label, String value) {
+  Widget _buildStatCard(String label, String value, {Color? color}) {
     return Container(
       width: 140,
       padding: const EdgeInsets.all(16),
@@ -229,7 +168,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             style: GoogleFonts.manrope(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: JolusColors.primary,
+              color: color ?? JolusColors.primary,
             ),
           ),
         ],
@@ -263,7 +202,96 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
+  void _showOrderDetails(BuildContext context, OrderModel order) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Detalles del Pedido',
+              style: GoogleFonts.manrope(fontWeight: FontWeight.bold, color: JolusColors.primary),
+            ),
+            IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildDetailRow('ID del Pedido:', '#${order.id}'),
+                _buildDetailRow('Fecha:', "${order.fecha.day}/${order.fecha.month}/${order.fecha.year} ${order.fecha.hour}:${order.fecha.minute.toString().padLeft(2, '0')}"),
+                _buildDetailRow('Estado:', order.estado.toUpperCase(), valueColor: order.estado.toLowerCase() == 'completado' ? Colors.green : (order.estado.toLowerCase() == 'anulado' || order.estado.toLowerCase() == 'cancelado' ? Colors.red : Colors.orange)),
+                const Divider(height: 32),
+                _buildDetailRow('Método de Pago:', order.metodoPago ?? 'No especificado'),
+                _buildDetailRow('Dirección:', order.direccionEntrega ?? 'No especificada'),
+                _buildDetailRow('Teléfono:', order.telefonoContacto ?? 'No especificado'),
+                if (order.comentario != null && order.comentario!.isNotEmpty)
+                  _buildDetailRow('Comentario:', order.comentario!),
+                const Divider(height: 32),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'TOTAL:',
+                      style: GoogleFonts.manrope(fontWeight: FontWeight.bold, fontSize: 18, color: JolusColors.primary),
+                    ),
+                    Text(
+                      '\$${order.total.toStringAsFixed(2)}',
+                      style: GoogleFonts.manrope(fontWeight: FontWeight.bold, fontSize: 18, color: JolusColors.primary),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: JolusColors.primary,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('Cerrar', style: TextStyle(color: Colors.white)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value, {Color? valueColor}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w600),
+          ),
+          Text(
+            value,
+            style: GoogleFonts.inter(fontSize: 14, color: valueColor ?? Colors.black87),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildHistoryItem({
+    required OrderModel order,
     required String title,
     required String date,
     required String price,
@@ -359,12 +387,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   color: JolusColors.primary,
                 ),
               ),
-              Text(
-                actionText,
-                style: GoogleFonts.inter(
-                  color: JolusColors.primary,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
+              InkWell(
+                onTap: () => _showOrderDetails(context, order),
+                child: Text(
+                  actionText,
+                  style: GoogleFonts.inter(
+                    color: JolusColors.primary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
                 ),
               ),
             ],
