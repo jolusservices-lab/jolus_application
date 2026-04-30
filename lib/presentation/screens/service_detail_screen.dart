@@ -126,18 +126,9 @@ class ServiceDetailScreen extends StatelessWidget {
           ),
         ],
       ),
-      bottomSheet: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 20,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+        color: Colors.white,
         child: SafeArea(
           child: ElevatedButton(
             onPressed: () {
@@ -156,7 +147,8 @@ class ServiceDetailScreen extends StatelessWidget {
               foregroundColor: Colors.white,
               minimumSize: const Size(double.infinity, 56),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              elevation: 0,
+              elevation: 4, // Añadimos una pequeña elevación al botón para que destaque
+              shadowColor: JolusColors.primary.withOpacity(0.4),
             ),
             child: Text(
               'Añadir al Carrito',
