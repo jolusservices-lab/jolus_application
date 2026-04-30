@@ -151,10 +151,12 @@ class _AnimatedServiceCardState extends State<_AnimatedServiceCard> {
                             widget.service.precio,
                             widget.service.imagen ?? '',
                           );
+                          ScaffoldMessenger.of(context).clearSnackBars();
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text('${widget.service.nombre} añadido'),
                               behavior: SnackBarBehavior.floating,
+                              duration: const Duration(milliseconds: 1500),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             ),
                           );

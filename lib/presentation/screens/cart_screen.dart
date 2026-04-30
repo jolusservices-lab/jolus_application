@@ -211,6 +211,34 @@ Total: \$${total.toStringAsFixed(2)} USD
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.delete_sweep_outlined, color: Colors.redAccent),
+            tooltip: 'Vaciar carrito',
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text('¿Vaciar carrito?', style: GoogleFonts.manrope(fontWeight: FontWeight.bold)),
+                    content: const Text('¿Estás seguro de que deseas eliminar todos los servicios del carrito?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text('Cancelar', style: GoogleFonts.manrope(color: Colors.grey)),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          cart.clear();
+                          Navigator.of(context).pop();
+                        },
+                        child: Text('Vaciar', style: GoogleFonts.manrope(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.notifications_outlined, color: Color(0xFF00236F)),
             onPressed: () {},
           ),

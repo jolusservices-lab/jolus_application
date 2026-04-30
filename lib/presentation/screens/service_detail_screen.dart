@@ -138,8 +138,14 @@ class ServiceDetailScreen extends StatelessWidget {
                 service.precio,
                 service.imagen ?? '',
               );
+              ScaffoldMessenger.of(context).clearSnackBars();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Añadido al carrito')),
+                SnackBar(
+                  content: const Text('Añadido al carrito'),
+                  behavior: SnackBarBehavior.floating,
+                  duration: const Duration(milliseconds: 1500),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
               );
             },
             style: ElevatedButton.styleFrom(

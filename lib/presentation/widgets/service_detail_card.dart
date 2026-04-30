@@ -173,10 +173,12 @@ class _AnimatedServiceDetailCardState extends State<_AnimatedServiceDetailCard> 
                               widget.service.precio,
                               widget.service.imagen ?? '',
                             );
+                            ScaffoldMessenger.of(context).clearSnackBars();
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text('${widget.service.nombre} añadido al carrito'),
                                 behavior: SnackBarBehavior.floating,
+                                duration: const Duration(milliseconds: 1500),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                               ),
                             );
