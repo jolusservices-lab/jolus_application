@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/colors.dart';
 import '../../core/providers/order_provider.dart';
+import '../../core/providers/user_provider.dart';
 import '../../core/models/order_model.dart';
 import '../../core/services/database_service.dart';
 
@@ -42,19 +43,64 @@ class _HistoryScreenState extends State<HistoryScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: JolusColors.primary),
-          onPressed: () => Navigator.maybePop(context),
+        toolbarHeight: 70,
+        titleSpacing: 0,
+        automaticallyImplyLeading: false,
+        title: Consumer<UserProvider>(
+          builder: (context, userProvider, _) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 22,
+                    backgroundColor: JolusColors.surfaceLow,
+                    backgroundImage: userProvider.photoUrl != null 
+                        ? NetworkImage(userProvider.photoUrl!) 
+                        : null,
+                    child: userProvider.photoUrl == null 
+                        ? const Icon(Icons.person, color: JolusColors.primary, size: 24) 
+                        : null,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Hola, ${userProvider.name.toUpperCase()} ${userProvider.subname.toUpperCase()}'.trim(),
+                          style: GoogleFonts.manrope(
+                            fontWeight: FontWeight.w800,
+                            color: JolusColors.primary,
+                            fontSize: 15,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Revisa tu historial de pedidos',
+                          style: GoogleFonts.inter(
+                            color: Colors.grey[500],
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
-        title: Text(
-          'Historial de Compras',
-          style: GoogleFonts.manrope(
-            fontWeight: FontWeight.bold,
-            color: JolusColors.primary,
-            fontSize: 18,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_none_rounded, color: JolusColors.primary),
+            onPressed: () {},
           ),
-        ),
-        centerTitle: true,
+          const SizedBox(width: 8),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(vertical: 16),

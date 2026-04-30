@@ -193,21 +193,56 @@ Total: \$${total.toStringAsFixed(2)} USD
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: const Padding(
-          padding: EdgeInsets.all(8.0),
-          child: CircleAvatar(
-            radius: 18,
-            backgroundColor: JolusColors.surfaceLow,
-            child: Icon(Icons.person, color: JolusColors.primary, size: 20),
-          ),
-        ),
-        title: Text(
-          'Jolus Services',
-          style: GoogleFonts.manrope(
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF00236F),
-            fontSize: 18,
-          ),
+        toolbarHeight: 70,
+        titleSpacing: 0,
+        automaticallyImplyLeading: false,
+        title: Consumer<UserProvider>(
+          builder: (context, userProvider, _) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 22,
+                    backgroundColor: JolusColors.surfaceLow,
+                    backgroundImage: userProvider.photoUrl != null 
+                        ? NetworkImage(userProvider.photoUrl!) 
+                        : null,
+                    child: userProvider.photoUrl == null 
+                        ? const Icon(Icons.person, color: JolusColors.primary, size: 24) 
+                        : null,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Hola, ${userProvider.name.toUpperCase()} ${userProvider.subname.toUpperCase()}'.trim(),
+                          style: GoogleFonts.manrope(
+                            fontWeight: FontWeight.w800,
+                            color: JolusColors.primary,
+                            fontSize: 15,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Revisa tu carrito de compras',
+                          style: GoogleFonts.inter(
+                            color: Colors.grey[500],
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
         actions: [
           IconButton(

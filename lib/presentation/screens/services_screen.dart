@@ -5,6 +5,7 @@ import '../../core/theme/colors.dart';
 import '../../core/services/database_service.dart';
 import '../../core/models/service_model.dart';
 import '../../core/providers/navigation_provider.dart';
+import '../../core/providers/user_provider.dart';
 import '../widgets/filter_chip.dart';
 import '../widgets/service_detail_card.dart';
 
@@ -39,16 +40,66 @@ class _ServicesScreenState extends State<ServicesScreen> {
         slivers: [
           SliverAppBar(
             floating: true,
+            automaticallyImplyLeading: false,
             backgroundColor: Colors.white,
             elevation: 0,
-            title: Text(
-              'Jolus Services',
-              style: GoogleFonts.manrope(
-                fontWeight: FontWeight.bold,
-                color: JolusColors.primary,
-                fontSize: 18,
-              ),
+            toolbarHeight: 70,
+            titleSpacing: 0,
+            title: Consumer<UserProvider>(
+              builder: (context, userProvider, _) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 22,
+                        backgroundColor: JolusColors.surfaceLow,
+                        backgroundImage: userProvider.photoUrl != null 
+                            ? NetworkImage(userProvider.photoUrl!) 
+                            : null,
+                        child: userProvider.photoUrl == null 
+                            ? const Icon(Icons.person, color: JolusColors.primary, size: 24) 
+                            : null,
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Hola, ${userProvider.name.toUpperCase()} ${userProvider.subname.toUpperCase()}'.trim(),
+                              style: GoogleFonts.manrope(
+                                fontWeight: FontWeight.w800,
+                                color: JolusColors.primary,
+                                fontSize: 15,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '¿Qué servicio necesitas hoy?',
+                              style: GoogleFonts.inter(
+                                color: Colors.grey[500],
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.notifications_none_rounded, color: JolusColors.primary),
+                onPressed: () {},
+              ),
+              const SizedBox(width: 8),
+            ],
           ),
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
