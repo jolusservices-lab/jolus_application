@@ -7,10 +7,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as path;
 import '../../core/theme/colors.dart';
 import '../../core/providers/user_provider.dart';
-import '../../core/providers/navigation_provider.dart';
 import '../../core/services/database_service.dart';
 import '../widgets/main_navigation.dart';
 import 'auth/login_screen.dart';
+import 'notifications_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -21,6 +21,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _isInfoExpanded = false;
+  bool _isSocialExpanded = false;
   bool _isEditing = false;
 
   late TextEditingController _nameController;
@@ -73,22 +74,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _launchURL(String url) async {
-    print('DEBUG: Intentando abrir URL original: "$url"');
+    debugPrint('DEBUG: Intentando abrir URL original: "$url"');
     if (url == '...' || url == 'No disponible' || url.isEmpty) {
-      print('DEBUG: URL inválida o vacía, abortando.');
+      debugPrint('DEBUG: URL inválida o vacía, abortando.');
       return;
     }
     
     String finalUrl = url.trim();
     
-    // Lógica para WhatsApp
     if (RegExp(r'^\+?[0-9\s\-]{7,20}$').hasMatch(finalUrl) || finalUrl.contains('wa.me')) {
       if (!finalUrl.startsWith('http')) {
         final cleanNumber = finalUrl.replaceAll(RegExp(r'[^0-9]'), '');
         finalUrl = 'https://wa.me/$cleanNumber';
       }
     } 
-    // Lógica para Redes Sociales si no tienen protocolo
     else if (!finalUrl.startsWith('http')) {
       if (finalUrl.contains('facebook.com')) {
         finalUrl = 'https://$finalUrl';
@@ -97,23 +96,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
       } else if (finalUrl.startsWith('@')) {
         finalUrl = 'https://instagram.com/${finalUrl.substring(1)}';
       } else {
-        // Intento genérico si parece un dominio
         finalUrl = 'https://$finalUrl';
       }
     }
 
-    print('DEBUG: URL procesada para abrir: "$finalUrl"');
+    debugPrint('DEBUG: URL procesada para abrir: "$finalUrl"');
 
     try {
       final Uri uri = Uri.parse(finalUrl);
-      // Intentamos primero con la aplicación externa
       bool launched = await launchUrl(
         uri, 
         mode: LaunchMode.externalApplication,
       );
       
       if (!launched) {
-        print('DEBUG: No se pudo abrir con aplicación externa, intentando modo plataforma...');
+        debugPrint('DEBUG: No se pudo abrir con aplicación externa, intentando modo plataforma...');
         launched = await launchUrl(uri, mode: LaunchMode.platformDefault);
       }
 
@@ -121,10 +118,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         throw 'No se pudo lanzar la URL';
       }
     } catch (e) {
-      print('ERROR: Fallo total al abrir la URL: $e');
+      debugPrint('ERROR: Fallo total al abrir la URL: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('No se pudo abrir el enlace. Verifica si tienes la app instalada o la URL es válida.'),
             backgroundColor: Colors.red,
           ),
@@ -190,375 +187,399 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final userProvider = Provider.of<UserProvider>(context);
     final photoUrl = userProvider.photoUrl;
 
-    return Scaffold(
-      backgroundColor: JolusColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: JolusColors.primary),
-          onPressed: () {
-            Navigator.maybePop(context);
-          },
+    return Theme(
+      data: Theme.of(context).copyWith(
+        splashFactory: NoSplash.splashFactory,
+        hoverColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        splashColor: Colors.transparent,
+        cardTheme: const CardThemeData(
+          elevation: 0,
+          color: Colors.white,
+          surfaceTintColor: Colors.transparent,
         ),
-        title: Text(
-          'Mi Perfil',
-          style: GoogleFonts.manrope(
-            fontWeight: FontWeight.bold,
-            color: JolusColors.primary,
-            fontSize: 18,
-          ),
+        listTileTheme: const ListTileThemeData(
+          tileColor: Colors.transparent,
+          selectedTileColor: Colors.transparent,
         ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.notifications_outlined, color: JolusColors.primary),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: CircleAvatar(
-              radius: 16,
-              backgroundImage: (photoUrl != null && photoUrl.isNotEmpty)
-                  ? NetworkImage(photoUrl)
-                  : const NetworkImage('https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png'),
-            ),
-          ),
-        ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        child: Column(
-          children: [
-            // Perfil Header
-            Center(
-              child: Column(
-                children: [
-                  Stack(
-                    children: [
-                      GestureDetector(
-                        onTap: _pickAndUploadImage,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 4),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 20,
-                                offset: const Offset(0, 10),
-                              )
-                            ],
-                          ),
-                          child: CircleAvatar(
-                            radius: 65,
-                            backgroundImage: (photoUrl != null && photoUrl.isNotEmpty)
-                                ? NetworkImage(photoUrl)
-                                : const NetworkImage('https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png'),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        bottom: 4,
-                        right: 4,
-                        child: GestureDetector(
-                          onTap: _pickAndUploadImage,
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF00236F),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.edit, color: Colors.white, size: 18),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    '${userProvider.name} ${userProvider.subname}',
-                    style: GoogleFonts.manrope(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                      color: JolusColors.primary,
+      child: Scaffold(
+        backgroundColor: JolusColors.background,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          toolbarHeight: 70,
+          titleSpacing: 0,
+          automaticallyImplyLeading: false,
+          title: Consumer<UserProvider>(
+            builder: (context, user, _) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 22,
+                      backgroundColor: JolusColors.surfaceLow,
+                      backgroundImage: (user.photoUrl != null && user.photoUrl!.isNotEmpty)
+                          ? NetworkImage(user.photoUrl!)
+                          : null,
+                      child: (user.photoUrl == null || user.photoUrl!.isEmpty)
+                          ? const Icon(Icons.person, color: JolusColors.primary, size: 24)
+                          : null,
                     ),
-                  ),
-                  Text(
-                    _emailController.text,
-                    style: GoogleFonts.inter(
-                      color: Colors.grey[500],
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-
-            // Información Personal (Acordeón)
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 15,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  ListTile(
-                    onTap: () => setState(() => _isInfoExpanded = !_isInfoExpanded),
-                    leading: const Icon(Icons.person_outline, color: JolusColors.primary),
-                    title: Text(
-                      'Información Personal',
-                      style: GoogleFonts.manrope(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: JolusColors.primary,
-                      ),
-                    ),
-                    trailing: Icon(
-                      _isInfoExpanded ? Icons.expand_less : Icons.expand_more,
-                      color: Colors.grey[400],
-                    ),
-                  ),
-                  if (_isInfoExpanded)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                    const SizedBox(width: 16),
+                    Expanded(
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Divider(),
-                          const SizedBox(height: 16),
-                          _buildInfoField('Nombres', _nameController, _isEditing),
-                          const SizedBox(height: 16),
-                          _buildInfoField('Apellidos', _subnameController, _isEditing),
-                          const SizedBox(height: 16),
-                          _buildInfoField('Correo', _emailController, _isEditing),
-                          const SizedBox(height: 16),
-                          _buildInfoField('Teléfono', _phoneController, _isEditing),
-                          const SizedBox(height: 16),
-                          _buildInfoField('Dirección', _addressController, _isEditing),
-                          const SizedBox(height: 24),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      if (_isEditing) {
-                                        // Cancelar edición (podría restaurar valores originales)
-                                        _isEditing = false;
-                                      } else {
-                                        _isEditing = true;
-                                      }
-                                    });
-                                  },
-                                  style: OutlinedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(vertical: 14),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                    side: BorderSide(color: _isEditing ? Colors.red : JolusColors.primary),
-                                  ),
-                                  child: Text(
-                                    _isEditing ? 'Cancelar' : 'Editar Información',
-                                    style: GoogleFonts.inter(
-                                      fontWeight: FontWeight.bold,
-                                      color: _isEditing ? Colors.red : JolusColors.primary,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              if (_isEditing) ...[
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: ElevatedButton(
-                                    onPressed: () async {
-                                      await Provider.of<UserProvider>(context, listen: false).updateProfile(
-                                        name: _nameController.text,
-                                        subname: _subnameController.text,
-                                        email: _emailController.text,
-                                        phone: _phoneController.text,
-                                        address: _addressController.text,
-                                      );
-                                      if (context.mounted) {
-                                        setState(() {
-                                          _isEditing = false;
-                                        });
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text('Cambios guardados exitosamente')),
-                                        );
-                                      }
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: JolusColors.primary,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(vertical: 14),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                      elevation: 0,
-                                    ),
-                                    child: const Text('Guardar Cambios', style: TextStyle(fontWeight: FontWeight.bold)),
-                                  ),
-                                ),
-                              ],
-                            ],
+                          Text(
+                            'HOLA, ${user.name} ${user.subname}'.toUpperCase().trim(),
+                            style: GoogleFonts.manrope(
+                              fontWeight: FontWeight.w800,
+                              color: JolusColors.primary,
+                              fontSize: 15,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Gestiona tu información personal',
+                            style: GoogleFonts.inter(
+                              color: Colors.grey[500],
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                ],
+                  ],
+                ),
+              );
+            },
+          ),
+          actions: [
+            IconButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const NotificationsScreen()),
               ),
+              icon: const Icon(Icons.notifications_none_rounded, color: JolusColors.primary),
             ),
-            const SizedBox(height: 16),
-
-            // Otros items
-            _buildActionCard(
-              icon: Icons.credit_card_outlined,
-              title: 'Métodos de Pago',
-              subtitle: 'Visa **** 1234',
-            ),
-            const SizedBox(height: 16),
-            _buildActionCard(
-              icon: Icons.shopping_bag_outlined,
-              title: 'Mis Pedidos',
-              subtitle: 'Historial de compras',
-              onTap: () {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => const MainNavigation(initialIndex: 3)),
-                  (route) => false,
-                );
-              },
-            ),
-            const SizedBox(height: 24),
-
-            // Redes Sociales Section
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 15,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
+            const SizedBox(width: 8),
+          ],
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          child: Column(
+            children: [
+              // Perfil Header
+              Center(
+                child: Column(
+                  children: [
+                    Stack(
+                      children: [
+                        GestureDetector(
+                          onTap: _pickAndUploadImage,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 4),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.1),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 10),
+                                )
+                              ],
+                            ),
+                            child: CircleAvatar(
+                              radius: 65,
+                              backgroundImage: (photoUrl != null && photoUrl.isNotEmpty)
+                                  ? NetworkImage(photoUrl)
+                                  : const NetworkImage('https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png'),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 4,
+                          right: 4,
+                          child: GestureDetector(
+                            onTap: _pickAndUploadImage,
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF00236F),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.edit, color: Colors.white, size: 18),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      '${userProvider.name} ${userProvider.subname}',
+                      style: GoogleFonts.manrope(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: JolusColors.primary,
+                      ),
+                    ),
+                    Text(
+                      _emailController.text,
+                      style: GoogleFonts.inter(
+                        color: Colors.grey[500],
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.share_outlined, color: JolusColors.primary),
-                      const SizedBox(width: 12),
-                      Text(
-                        'Redes Sociales',
+              const SizedBox(height: 32),
+  
+              // Información Personal (Acordeón)
+              _AnimatedCardWrapper(
+                child: Column(
+                  children: [
+                    ListTile(
+                      onTap: () => setState(() => _isInfoExpanded = !_isInfoExpanded),
+                      leading: const Icon(Icons.person_outline, color: JolusColors.primary),
+                      title: Text(
+                        'Información Personal',
                         style: GoogleFonts.manrope(
-                          fontSize: 18,
                           fontWeight: FontWeight.bold,
+                          fontSize: 16,
                           color: JolusColors.primary,
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  _buildSocialTile(
-                    icon: Icons.chat_bubble_outline,
-                    iconColor: Colors.green,
-                    title: 'WhatsApp',
-                    value: _usernameHandle,
-                    onTap: () => _launchURL(_whatsapp),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSocialTile(
-                    icon: Icons.camera_alt_outlined,
-                    iconColor: Colors.pink,
-                    title: 'Instagram',
-                    value: _usernameHandle,
-                    onTap: () => _launchURL(_instagram),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSocialTile(
-                    icon: Icons.facebook_outlined,
-                    iconColor: Colors.blue,
-                    title: 'Facebook',
-                    value: _usernameHandle,
-                    onTap: () => _launchURL(_facebook),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 20),
-                    child: Divider(),
-                  ),
-                  Text(
-                    'Estado de Cuenta',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.w500,
+                      trailing: Icon(
+                        _isInfoExpanded ? Icons.expand_less : Icons.expand_more,
+                        color: Colors.grey[400],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Colors.green,
-                          shape: BoxShape.circle,
+                    if (_isInfoExpanded)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                        child: Column(
+                          children: [
+                            const Divider(),
+                            const SizedBox(height: 16),
+                            _buildInfoField('Nombres', _nameController, _isEditing),
+                            const SizedBox(height: 16),
+                            _buildInfoField('Apellidos', _subnameController, _isEditing),
+                            const SizedBox(height: 16),
+                            _buildInfoField('Correo', _emailController, _isEditing),
+                            const SizedBox(height: 16),
+                            _buildInfoField('Teléfono', _phoneController, _isEditing),
+                            const SizedBox(height: 16),
+                            _buildInfoField('Dirección', _addressController, _isEditing),
+                            const SizedBox(height: 24),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        _isEditing = !_isEditing;
+                                      });
+                                    },
+                                    style: OutlinedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(vertical: 14),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      side: BorderSide(color: _isEditing ? Colors.red : JolusColors.primary),
+                                    ),
+                                    child: Text(
+                                      _isEditing ? 'Cancelar' : 'Editar Información',
+                                      style: GoogleFonts.inter(
+                                        fontWeight: FontWeight.bold,
+                                        color: _isEditing ? Colors.red : JolusColors.primary,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                if (_isEditing) ...[
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      onPressed: () async {
+                                        await Provider.of<UserProvider>(context, listen: false).updateProfile(
+                                          name: _nameController.text,
+                                          subname: _subnameController.text,
+                                          email: _emailController.text,
+                                          phone: _phoneController.text,
+                                          address: _addressController.text,
+                                        );
+                                        if (context.mounted) {
+                                          setState(() {
+                                            _isEditing = false;
+                                          });
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('Cambios guardados exitosamente')),
+                                          );
+                                        }
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: JolusColors.primary,
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(vertical: 14),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        elevation: 0,
+                                      ),
+                                      child: const Text('Guardar Cambios', style: TextStyle(fontWeight: FontWeight.bold)),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Verificado',
-                        style: GoogleFonts.inter(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-
-            // Cerrar Sesión
-            TextButton.icon(
-              onPressed: () async {
-                // Limpiar datos del usuario
-                userProvider.clearUser();
-                
-                // Cerrar sesión en Supabase
-                await Supabase.instance.client.auth.signOut();
-                
-                if (mounted) {
-                  // Navegar al Login directamente
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LoginScreen()),
-                    (route) => false,
-                  );
-                }
-              },
-              icon: const Icon(Icons.logout, color: Colors.red),
-              label: Text(
-                'Cerrar Sesión',
-                style: GoogleFonts.inter(
-                  color: Colors.red,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                  ],
                 ),
               ),
-            ),
-            const SizedBox(height: 40),
-          ],
+              const SizedBox(height: 16),
+  
+              // Otros items
+              _buildActionCard(
+                icon: Icons.shopping_bag_outlined,
+                title: 'Mis Pedidos',
+                subtitle: 'Historial de compras',
+                onTap: () {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const MainNavigation(initialIndex: 3)),
+                    (route) => false,
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+  
+              // Redes Sociales Section (Acordeón)
+              _AnimatedCardWrapper(
+                child: Column(
+                  children: [
+                    ListTile(
+                      onTap: () => setState(() => _isSocialExpanded = !_isSocialExpanded),
+                      leading: const Icon(Icons.share_outlined, color: JolusColors.primary),
+                      title: Text(
+                        'Redes Sociales',
+                        style: GoogleFonts.manrope(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: JolusColors.primary,
+                        ),
+                      ),
+                      trailing: Icon(
+                        _isSocialExpanded ? Icons.expand_less : Icons.expand_more,
+                        color: Colors.grey[400],
+                      ),
+                    ),
+                    if (_isSocialExpanded)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Divider(),
+                            const SizedBox(height: 16),
+                            _buildSocialTile(
+                              icon: Icons.chat_bubble_outline,
+                              iconColor: Colors.green,
+                              title: 'WhatsApp',
+                              value: _usernameHandle,
+                              onTap: () => _launchURL(_whatsapp),
+                            ),
+                            const SizedBox(height: 12),
+                            _buildSocialTile(
+                              icon: Icons.camera_alt_outlined,
+                              iconColor: Colors.pink,
+                              title: 'Instagram',
+                              value: _usernameHandle,
+                              onTap: () => _launchURL(_instagram),
+                            ),
+                            const SizedBox(height: 12),
+                            _buildSocialTile(
+                              icon: Icons.facebook_outlined,
+                              iconColor: Colors.blue,
+                              title: 'Facebook',
+                              value: _usernameHandle,
+                              onTap: () => _launchURL(_facebook),
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 20),
+                              child: Divider(),
+                            ),
+                            Text(
+                              'Estado de Cuenta',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.green,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Verificado',
+                                  style: GoogleFonts.inter(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 32),
+  
+              // Cerrar Sesión
+              TextButton.icon(
+                onPressed: () async {
+                  // Limpiar datos del usuario
+                  userProvider.clearUser();
+                  
+                  // Cerrar sesión en Supabase
+                  await Supabase.instance.client.auth.signOut();
+                  
+                  if (context.mounted) {
+                    // Navegar al Login directamente
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => const LoginScreen()),
+                      (route) => false,
+                    );
+                  }
+                },
+                icon: const Icon(Icons.logout, color: Colors.red),
+                label: Text(
+                  'Cerrar Sesión',
+                  style: GoogleFonts.inter(
+                    color: Colors.red,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 40),
+            ],
+          ),
         ),
       ),
     );
@@ -596,39 +617,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildActionCard({required IconData icon, required String title, required String subtitle, VoidCallback? onTap}) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: ListTile(
-        onTap: onTap,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: JolusColors.primary.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, color: JolusColors.primary),
-        ),
-        title: Text(
-          title,
-          style: GoogleFonts.manrope(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[500]),
-        ),
-        trailing: Icon(Icons.chevron_right, color: Colors.grey[400]),
-      ),
+    return _AnimatedActionCard(
+      icon: icon,
+      title: title,
+      subtitle: subtitle,
+      onTap: onTap,
     );
   }
 
@@ -649,7 +642,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.1),
+                color: iconColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, color: iconColor, size: 20),
@@ -683,6 +676,103 @@ class _ProfileScreenState extends State<ProfileScreen> {
             if (onTap != null && value != '...' && value != 'No disponible')
               Icon(Icons.open_in_new, size: 16, color: Colors.grey[300]),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AnimatedCardWrapper extends StatefulWidget {
+  final Widget child;
+  const _AnimatedCardWrapper({required this.child});
+
+  @override
+  State<_AnimatedCardWrapper> createState() => _AnimatedCardWrapperState();
+}
+
+class _AnimatedCardWrapperState extends State<_AnimatedCardWrapper> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+        transform: Matrix4.identity()
+          ..translate(0.0, _isHovered ? -8.0 : 0.0)
+          ..scale(_isHovered ? 1.01 : 1.0),
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: widget.child,
+      ),
+    );
+  }
+}
+
+class _AnimatedActionCard extends StatefulWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback? onTap;
+
+  const _AnimatedActionCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    this.onTap,
+  });
+
+  @override
+  State<_AnimatedActionCard> createState() => _AnimatedActionCardState();
+}
+
+class _AnimatedActionCardState extends State<_AnimatedActionCard> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+          transform: Matrix4.identity()
+            ..translate(0.0, _isHovered ? -8.0 : 0.0)
+            ..scale(_isHovered ? 1.01 : 1.0),
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            leading: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: JolusColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(widget.icon, color: JolusColors.primary),
+            ),
+            title: Text(
+              widget.title,
+              style: GoogleFonts.manrope(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            subtitle: Text(
+              widget.subtitle,
+              style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[500]),
+            ),
+            trailing: Icon(Icons.chevron_right, color: Colors.grey[400]),
+          ),
         ),
       ),
     );

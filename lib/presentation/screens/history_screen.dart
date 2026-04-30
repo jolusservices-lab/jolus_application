@@ -6,6 +6,7 @@ import '../../core/providers/order_provider.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/models/order_model.dart';
 import '../../core/services/database_service.dart';
+import 'notifications_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -23,10 +24,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
     
     // Filtrar los pedidos localmente
     final orders = orderProvider.orders.where((order) {
+      final status = order.estado.toLowerCase();
       if (_selectedFilter == 'Todos') return true;
-      if (_selectedFilter == 'Completados') return order.estado.toLowerCase() == 'completado';
-      if (_selectedFilter == 'Pendientes') return order.estado.toLowerCase() == 'pendiente';
-      if (_selectedFilter == 'Anulados') return order.estado.toLowerCase() == 'anulado' || order.estado.toLowerCase() == 'cancelado';
+      if (_selectedFilter == 'Completados') return status == 'completado';
+      if (_selectedFilter == 'Pendientes') return status == 'pendiente' || status == 'en revisión';
+      if (_selectedFilter == 'Anulados') return status == 'anulado' || status == 'cancelado';
       return true;
     }).toList();
 
@@ -35,7 +37,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
         .fold(0, (sum, item) => sum + item.total);
 
     final int completedCount = orderProvider.orders.where((o) => o.estado.toLowerCase() == 'completado').length;
-    final int pendingCount = orderProvider.orders.where((o) => o.estado.toLowerCase() == 'pendiente').length;
+    final int pendingCount = orderProvider.orders.where((o) {
+      final status = o.estado.toLowerCase();
+      return status == 'pendiente' || status == 'en revisión';
+    }).length;
     final int cancelledCount = orderProvider.orders.where((o) => o.estado.toLowerCase() == 'anulado' || o.estado.toLowerCase() == 'cancelado').length;
 
     return Scaffold(
@@ -69,7 +74,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'Hola, ${userProvider.name.toUpperCase()} ${userProvider.subname.toUpperCase()}'.trim(),
+                          'HOLA, ${userProvider.name} ${userProvider.subname}'.toUpperCase().trim(),
                           style: GoogleFonts.manrope(
                             fontWeight: FontWeight.w800,
                             color: JolusColors.primary,
@@ -97,7 +102,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_none_rounded, color: JolusColors.primary),
-            onPressed: () {},
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+            ),
           ),
           const SizedBox(width: 8),
         ],
@@ -170,8 +178,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         
                         // Determinar color por estado
                         Color statusColor = Colors.orange;
-                        if (order.estado.toLowerCase() == 'completado') statusColor = Colors.green;
-                        if (order.estado.toLowerCase() == 'anulado' || order.estado.toLowerCase() == 'cancelado') statusColor = Colors.red;
+                        final statusLower = order.estado.toLowerCase();
+                        if (statusLower == 'completado') statusColor = Colors.green;
+                        if (statusLower == 'anulado' || statusLower == 'cancelado') statusColor = Colors.red;
+                        if (statusLower == 'en revisión') statusColor = Colors.blue;
 
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 16),
@@ -284,7 +294,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
               children: [
                 _buildDetailRow('ID del Pedido:', '#${order.id}'),
                 _buildDetailRow('Fecha:', "${order.fecha.day}/${order.fecha.month}/${order.fecha.year} ${order.fecha.hour}:${order.fecha.minute.toString().padLeft(2, '0')}"),
-                _buildDetailRow('Estado:', order.estado.toUpperCase(), valueColor: order.estado.toLowerCase() == 'completado' ? Colors.green : (order.estado.toLowerCase() == 'anulado' || order.estado.toLowerCase() == 'cancelado' ? Colors.red : Colors.orange)),
+                _buildDetailRow(
+                  'Estado:', 
+                  order.estado.toUpperCase(), 
+                  valueColor: order.estado.toLowerCase() == 'completado' 
+                    ? Colors.green 
+                    : (order.estado.toLowerCase() == 'anulado' || order.estado.toLowerCase() == 'cancelado' 
+                        ? Colors.red 
+                        : (order.estado.toLowerCase() == 'en revisión' ? Colors.blue : Colors.orange)),
+                ),
                 const Divider(height: 32),
                 _buildDetailRow('Método de Pago:', order.metodoPago ?? 'No especificado'),
                 _buildDetailRow('Dirección:', order.direccionEntrega ?? 'No especificada'),

@@ -8,6 +8,7 @@ import '../../core/providers/navigation_provider.dart';
 import '../../core/providers/user_provider.dart';
 import '../widgets/filter_chip.dart';
 import '../widgets/service_detail_card.dart';
+import 'notifications_screen.dart';
 
 class ServicesScreen extends StatefulWidget {
   const ServicesScreen({super.key});
@@ -68,7 +69,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              'Hola, ${userProvider.name.toUpperCase()} ${userProvider.subname.toUpperCase()}'.trim(),
+                              'HOLA, ${userProvider.name} ${userProvider.subname}'.toUpperCase().trim(),
                               style: GoogleFonts.manrope(
                                 fontWeight: FontWeight.w800,
                                 color: JolusColors.primary,
@@ -96,7 +97,10 @@ class _ServicesScreenState extends State<ServicesScreen> {
             actions: [
               IconButton(
                 icon: const Icon(Icons.notifications_none_rounded, color: JolusColors.primary),
-                onPressed: () {},
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+                ),
               ),
               const SizedBox(width: 8),
             ],

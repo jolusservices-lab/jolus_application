@@ -7,6 +7,7 @@ import '../../core/providers/cart_provider.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/providers/order_provider.dart';
 import 'payment_detail_screen.dart';
+import 'notifications_screen.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -219,7 +220,7 @@ Total: \$${total.toStringAsFixed(2)} USD
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'Hola, ${userProvider.name.toUpperCase()} ${userProvider.subname.toUpperCase()}'.trim(),
+                          'HOLA, ${userProvider.name} ${userProvider.subname}'.toUpperCase().trim(),
                           style: GoogleFonts.manrope(
                             fontWeight: FontWeight.w800,
                             color: JolusColors.primary,
@@ -275,7 +276,10 @@ Total: \$${total.toStringAsFixed(2)} USD
           ),
           IconButton(
             icon: const Icon(Icons.notifications_outlined, color: Color(0xFF00236F)),
-            onPressed: () {},
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+            ),
           ),
         ],
       ),

@@ -7,6 +7,7 @@ import '../../core/providers/navigation_provider.dart';
 import '../../core/providers/user_provider.dart';
 import '../widgets/category_carousel.dart';
 import '../widgets/service_card.dart';
+import 'notifications_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -25,17 +26,20 @@ class HomeScreen extends StatelessWidget {
             backgroundColor: Colors.white,
             surfaceTintColor: Colors.white,
             elevation: 0,
+            toolbarHeight: 70,
             leading: Padding(
               padding: const EdgeInsets.only(left: 16.0),
-              child: CircleAvatar(
-                radius: 18,
-                backgroundColor: JolusColors.surfaceLow,
-                backgroundImage: userProvider.photoUrl != null 
-                    ? NetworkImage(userProvider.photoUrl!) 
-                    : null,
-                child: userProvider.photoUrl == null 
-                    ? const Icon(Icons.person, color: JolusColors.primary, size: 20)
-                    : null,
+              child: Center(
+                child: CircleAvatar(
+                  radius: 18,
+                  backgroundColor: JolusColors.surfaceLow,
+                  backgroundImage: userProvider.photoUrl != null 
+                      ? NetworkImage(userProvider.photoUrl!) 
+                      : null,
+                  child: userProvider.photoUrl == null 
+                      ? const Icon(Icons.person, color: JolusColors.primary, size: 20)
+                      : null,
+                ),
               ),
             ),
             title: Column(
@@ -43,7 +47,7 @@ class HomeScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  userProvider.id.isEmpty ? 'Jolus Services' : 'Hola, ${userProvider.name} ${userProvider.subname}',
+                  userProvider.id.isEmpty ? 'Jolus Services' : 'HOLA, ${userProvider.name} ${userProvider.subname}'.toUpperCase().trim(),
                   style: GoogleFonts.manrope(
                     fontWeight: FontWeight.bold,
                     color: JolusColors.primary,
@@ -62,7 +66,10 @@ class HomeScreen extends StatelessWidget {
             ),
             actions: [
               IconButton(
-                onPressed: () {},
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+                ),
                 icon: const Icon(Icons.notifications_outlined, color: JolusColors.primary),
               ),
               const SizedBox(width: 8),
@@ -187,7 +194,7 @@ class HomeScreen extends StatelessWidget {
 
                 ServiceCard(
                   service: ServiceModel(
-                    id: 's1',
+                    id: 'eb7617b3-652a-430c-87d4-e696f9260641',
                     nombre: 'Buffet Ejecutivo Premium',
                     precio: 45.0,
                     descripcion: 'Servicio completo para eventos corporativos con opciones gourmet...',
@@ -200,7 +207,7 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 ServiceCard(
                   service: ServiceModel(
-                    id: 's2',
+                    id: '3c754668-2321-4f93-b1d7-27b03138b71d',
                     nombre: 'Barra Móvil de Cócteles',
                     precio: 280.0,
                     descripcion: 'Mixología creativa para bodas y fiestas privadas. Incluye insumos y barra...',

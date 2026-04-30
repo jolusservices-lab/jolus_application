@@ -216,6 +216,18 @@ class DatabaseService {
     }
   }
 
+  Future<void> updateOrderStatus(String orderId, String status) async {
+    try {
+      await _supabase
+          .from('pedidos')
+          .update({'estado': status})
+          .eq('id', int.parse(orderId));
+    } catch (e) {
+      print('Error al actualizar estado del pedido: $e');
+      rethrow;
+    }
+  }
+
   Future<void> deleteOrder(String orderId) async {
     try {
       // Al eliminar el pedido, los items se deberían eliminar por cascada en la DB 

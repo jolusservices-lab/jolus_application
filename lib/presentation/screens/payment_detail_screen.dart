@@ -116,6 +116,11 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
 
       await _dbService.uploadPaymentReceipt(receipt);
 
+      // 3. Actualizar el estado del pedido a 'en revisión' o similar
+      if (!mounted) return;
+      await Provider.of<OrderProvider>(context, listen: false)
+          .updateOrderStatus(widget.orderId, 'en revisión');
+
       if (!mounted) return;
       
       ScaffoldMessenger.of(context).showSnackBar(
@@ -196,6 +201,7 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
         appBar: AppBar(
           backgroundColor: Colors.white,
           elevation: 0,
+          toolbarHeight: 70,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Color(0xFF00236F)),
             onPressed: () async {

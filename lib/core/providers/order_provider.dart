@@ -70,6 +70,32 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> updateOrderStatus(String orderId, String status) async {
+    try {
+      await _dbService.updateOrderStatus(orderId, status);
+      
+      // Actualizar localmente
+      final index = _orders.indexWhere((order) => order.id == orderId);
+      if (index != -1) {
+        _orders[index] = OrderModel(
+          id: _orders[index].id,
+          userId: _orders[index].userId,
+          fecha: _orders[index].fecha,
+          total: _orders[index].total,
+          estado: status,
+          direccionEntrega: _orders[index].direccionEntrega,
+          metodoPago: _orders[index].metodoPago,
+          telefonoContacto: _orders[index].telefonoContacto,
+          comentario: _orders[index].comentario,
+        );
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error al actualizar estado en Provider: $e');
+      rethrow;
+    }
+  }
+
   Future<void> cancelOrder(String orderId) async {
     try {
       // 1. Borrar de la base de datos (DatabaseService ya maneja pedido_items y pedidos)
