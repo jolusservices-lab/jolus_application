@@ -30,6 +30,7 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
   final _idController = TextEditingController();
   final _bankController = TextEditingController();
   final _emailController = TextEditingController();
+  final _receiptNumberController = TextEditingController();
   
   XFile? _imageFile;
   bool _isUploading = false;
@@ -40,7 +41,11 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
     // Pre-llenar datos del usuario si están disponibles
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final user = Provider.of<UserProvider>(context, listen: false);
-      _nameController.text = user.name;
+      String fullName = user.name;
+      if (user.subname.isNotEmpty) {
+        fullName += ' ${user.subname}';
+      }
+      _nameController.text = fullName;
       _emailController.text = user.email;
     });
   }
@@ -51,6 +56,7 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
     _idController.dispose();
     _bankController.dispose();
     _emailController.dispose();
+    _receiptNumberController.dispose();
     super.dispose();
   }
 
@@ -100,6 +106,11 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
         userId: user.id,
         amount: widget.total,
         receiptUrl: publicUrl,
+        receiptNumber: _receiptNumberController.text.trim(),
+        fullName: _nameController.text.trim(),
+        cedula: _idController.text.trim(),
+        bankName: _bankController.text.trim(),
+        email: _emailController.text.trim(),
         paymentDate: DateTime.now(),
       );
 
@@ -268,6 +279,8 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
                     _buildReportField('Nombre Completo', 'Ej: Juan Pérez', controller: _nameController),
                     const SizedBox(height: 16),
                     _buildReportField('Número de Identificación', 'Cédula o Pasaporte', controller: _idController),
+                    const SizedBox(height: 16),
+                    _buildReportField('Número de Comprobante', 'Ej: 12345678', controller: _receiptNumberController),
                     const SizedBox(height: 16),
                     _buildReportField('Fecha de Pago', 'Hoy', suffixIcon: Icons.calendar_today_outlined, enabled: false),
                     const SizedBox(height: 16),
