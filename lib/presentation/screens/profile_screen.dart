@@ -465,7 +465,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       onTap: () => setState(() => _isSocialExpanded = !_isSocialExpanded),
                       leading: const Icon(Icons.share_outlined, color: JolusColors.primary),
                       title: Text(
-                        'Redes Sociales',
+                        'Contactanos',
                         style: GoogleFonts.manrope(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
