@@ -9,7 +9,13 @@ class CartProvider extends ChangeNotifier {
 
   Map<String, CartItem> get items => {..._items};
 
-  int get itemCount => _items.length;
+  int get itemCount {
+    var total = 0;
+    _items.forEach((key, cartItem) {
+      total += cartItem.quantity;
+    });
+    return total;
+  }
 
   double get totalAmount {
     var total = 0.0;
