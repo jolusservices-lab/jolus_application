@@ -246,22 +246,91 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 if (order.comentario != null && order.comentario!.isNotEmpty)
                   _buildDetailRow('Comentario:', order.comentario!),
                 const Divider(height: 32),
-                if (receiptData != null && receiptData['file_url'] != null) ...[
+                if (receiptData != null && receiptData['url_comprobante'] != null) ...[
                   Text(
-                    'Comprobante de Pago:',
-                    style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w600),
+                    'DATOS DEL COMPROBANTE:',
+                    style: GoogleFonts.inter(
+                      fontSize: 12, 
+                      color: JolusColors.primary, 
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.1,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildDetailRow('Banco:', receiptData['nombre_banco'] ?? 'No especificado'),
+                  _buildDetailRow('Nro. Referencia:', receiptData['numero_comprobante'] ?? 'No especificado'),
+                  _buildDetailRow('Titular:', receiptData['nombre_completo'] ?? 'No especificado'),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Imagen del Comprobante (Toca para ampliar):',
+                    style: GoogleFonts.inter(fontSize: 11, color: Colors.grey[500], fontStyle: FontStyle.italic),
                   ),
                   const SizedBox(height: 8),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      receiptData['file_url'],
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return const Center(child: CircularProgressIndicator());
-                      },
-                      errorBuilder: (context, error, stackTrace) => const Text('Error al cargar imagen del comprobante'),
+                  GestureDetector(
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => Dialog(
+                          backgroundColor: Colors.transparent,
+                          insetPadding: const EdgeInsets.all(10),
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              InteractiveViewer(
+                                panEnabled: true,
+                                minScale: 0.5,
+                                maxScale: 4,
+                                child: Image.network(
+                                  receiptData['url_comprobante'],
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                              Positioned(
+                                top: 10,
+                                right: 10,
+                                child: IconButton(
+                                  icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                                  onPressed: () => Navigator.pop(context),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey[200]!),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          receiptData['url_comprobante'],
+                          height: 220,
+                          width: double.infinity,
+                          fit: BoxFit.contain,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              height: 220,
+                              child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            height: 100,
+                            child: const Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.broken_image, color: Colors.grey),
+                                Text('Error al cargar comprobante', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                   const Divider(height: 32),
