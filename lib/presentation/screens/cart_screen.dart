@@ -19,6 +19,30 @@ class _CartScreenState extends State<CartScreen> {
   DateTime _selectedDate = DateTime.now();
   String _selectedTime = '11:00';
   String _paymentMethod = 'Transferencia';
+  List<DateTime> _reservedDates = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReservedDates();
+  }
+
+  Future<void> _loadReservedDates() async {
+    final orderProvider = Provider.of<OrderProvider>(context, listen: false);
+    final dates = await orderProvider.getReservedDates();
+    setState(() {
+      _reservedDates = dates;
+    });
+  }
+
+  bool _isDateTimeReserved(DateTime date, String time) {
+    return _reservedDates.any((reserved) {
+      return reserved.year == date.year &&
+          reserved.month == date.month &&
+          reserved.day == date.day &&
+          '${reserved.hour.toString().padLeft(2, '0')}:${reserved.minute.toString().padLeft(2, '0')}' == time;
+    });
+  }
 
   String _getFormattedFullDate() {
     final days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
@@ -68,11 +92,42 @@ class _CartScreenState extends State<CartScreen> {
   Future<void> _processCheckout(BuildContext context, CartProvider cart, UserProvider user, OrderProvider orderProvider) async {
     final double total = cart.totalAmount * 1.07 + 5.0;
     
+    // Combinar fecha y hora para el pedido
+    final int hour = int.parse(_selectedTime.split(':')[0]);
+    final int minute = int.parse(_selectedTime.split(':')[1]);
+    final DateTime fullOrderDate = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      hour,
+      minute,
+    );
+
+    // Verificar si sigue disponible justo antes de crear
+    final reserved = await orderProvider.getReservedDates();
+    final isTaken = reserved.any((r) => 
+      r.year == fullOrderDate.year && 
+      r.month == fullOrderDate.month && 
+      r.day == fullOrderDate.day && 
+      r.hour == fullOrderDate.hour && 
+      r.minute == fullOrderDate.minute
+    );
+
+    if (isTaken) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lo sentimos, este horario acaba de ser reservado. Por favor elige otro.')),
+      );
+      _loadReservedDates();
+      return;
+    }
+
     // 1. Crear el pedido en Supabase
     final String? pedidoId = await orderProvider.placeOrder(
       userId: user.id,
       total: total,
       items: cart.items.values.toList(),
+      fecha: fullOrderDate,
       direccion: user.address,
       metodoPago: _paymentMethod,
       telefono: user.phone,
@@ -322,15 +377,30 @@ Total: \$${total.toStringAsFixed(2)} USD
                         final isSelected = date.day == _selectedDate.day && 
                                          date.month == _selectedDate.month && 
                                          date.year == _selectedDate.year;
+                        
+                        // Verificar si el día tiene algún horario disponible
+                        final allSlots = _generateTimeSlots();
+                        final availableSlots = allSlots.where((t) => !_isDateTimeReserved(date, t)).toList();
+                        final isFullyReserved = availableSlots.isEmpty;
+
                         final daysShort = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
                         return Padding(
                           padding: const EdgeInsets.only(right: 12),
                           child: GestureDetector(
-                            onTap: () => setState(() => _selectedDate = date),
-                            child: _buildMiniCalendarDay(
-                              daysShort[date.weekday - 1], 
-                              date.day, 
-                              isSelected
+                            onTap: isFullyReserved ? null : () => setState(() {
+                              _selectedDate = date;
+                              // Si el horario actual no está disponible en la nueva fecha, elegir el primero disponible
+                              if (_isDateTimeReserved(date, _selectedTime)) {
+                                _selectedTime = availableSlots.isNotEmpty ? availableSlots.first : '11:00';
+                              }
+                            }),
+                            child: Opacity(
+                              opacity: isFullyReserved ? 0.3 : 1.0,
+                              child: _buildMiniCalendarDay(
+                                daysShort[date.weekday - 1], 
+                                date.day, 
+                                isSelected
+                              ),
                             ),
                           ),
                         );
@@ -364,7 +434,7 @@ Total: \$${total.toStringAsFixed(2)} USD
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        ..._generateTimeSlots().map((time) => Padding(
+                        ..._generateTimeSlots().where((time) => !_isDateTimeReserved(_selectedDate, time)).map((time) => Padding(
                           padding: const EdgeInsets.only(right: 12),
                           child: _buildTimeChip(time, _selectedTime == time),
                         )),

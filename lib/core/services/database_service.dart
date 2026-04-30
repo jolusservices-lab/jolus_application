@@ -110,6 +110,7 @@ class DatabaseService {
     required String userId,
     required double total,
     required List<CartItem> items,
+    DateTime? fecha,
     String? direccion,
     String? metodoPago,
     String? telefono,
@@ -120,6 +121,7 @@ class DatabaseService {
       final orderResponse = await _supabase.from('pedidos').insert({
         'user_id': userId,
         'total': total,
+        'fecha': fecha?.toIso8601String(),
         'direccion_entrega': direccion,
         'metodo_pago': metodoPago,
         'telefono_contacto': telefono,
@@ -159,6 +161,21 @@ class DatabaseService {
     }
   }
 
+  Future<List<DateTime>> getReservedDates() async {
+    try {
+      final data = await _supabase
+          .from('pedidos')
+          .select('fecha')
+          .neq('estado', 'cancelado');
+      return (data as List)
+          .map((json) => DateTime.parse(json['fecha']))
+          .toList();
+    } catch (e) {
+      print('Error al obtener fechas reservadas: $e');
+      return [];
+    }
+  }
+
   // --- COMPROBANTES DE PAGOS ---
   Future<String?> uploadReceiptFile(String orderId, dynamic fileBytes, String extension) async {
     try {
@@ -181,6 +198,19 @@ class DatabaseService {
       await _supabase.from('comprobantesPagos').insert(receipt.toJson());
     } catch (e) {
       print('Error al registrar comprobante en DB: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteOrder(String orderId) async {
+    try {
+      // Al eliminar el pedido, los items se deberían eliminar por cascada en la DB 
+      // si está configurada, de lo contrario hay que eliminarlos manualmente.
+      // Por seguridad eliminamos ambos.
+      await _supabase.from('pedido_items').delete().eq('pedido_id', int.parse(orderId));
+      await _supabase.from('pedidos').delete().eq('id', int.parse(orderId));
+    } catch (e) {
+      print('Error al eliminar pedido: $e');
       rethrow;
     }
   }

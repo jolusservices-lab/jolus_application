@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../core/providers/cart_provider.dart';
 import '../../core/providers/user_provider.dart';
+import '../../core/providers/order_provider.dart';
 import '../../core/services/database_service.dart';
 import '../../core/models/payment_receipt_model.dart';
 import '../widgets/main_navigation.dart';
@@ -126,209 +127,266 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
     }
   }
 
+  Future<bool> _onWillPop() async {
+    final bool? shouldPop = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          '¿Cancelar pedido?',
+          style: GoogleFonts.manrope(fontWeight: FontWeight.bold, color: const Color(0xFF00236F)),
+        ),
+        content: Text(
+          'Si regresas ahora, el pedido se cancelará y deberás agendarlo nuevamente.',
+          style: GoogleFonts.inter(color: Colors.grey[600]),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text('Mantener', style: GoogleFonts.inter(color: Colors.grey[600], fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text('Aceptar y Cancelar', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldPop == true) {
+      try {
+        // Usamos el OrderProvider para borrar de DB y de la UI al mismo tiempo
+        await Provider.of<OrderProvider>(context, listen: false).cancelOrder(widget.orderId);
+      } catch (e) {
+        debugPrint('Error al cancelar pedido: $e');
+      }
+      return true;
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FE),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF00236F)),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Detalles de Pago',
-          style: GoogleFonts.manrope(
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF00236F),
-            fontSize: 18,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final bool shouldPop = await _onWillPop();
+        if (shouldPop && context.mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8F9FE),
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Color(0xFF00236F)),
+            onPressed: () async {
+              final bool shouldPop = await _onWillPop();
+              if (shouldPop && context.mounted) {
+                Navigator.of(context).pop();
+              }
+            },
+          ),
+          title: Text(
+            'Detalles de Pago',
+            style: GoogleFonts.manrope(
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF00236F),
+              fontSize: 18,
+            ),
           ),
         ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Cuentas Bancarias',
-              style: GoogleFonts.manrope(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF00236F),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Cuentas Bancarias',
+                style: GoogleFonts.manrope(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF00236F),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _buildBankCard(
-                    bankName: 'Banco Mercantil',
-                    holderName: 'Jolus Services S.A.',
-                    accountNumber: '0105 1234 5678 9012 3456',
-                    ruc: '12345678-9',
-                    email: 'pagos@jolus-services.com',
-                    type: 'Corriente',
-                    color: const Color(0xFF002266),
-                  ),
-                  const SizedBox(width: 16),
-                  _buildBankCard(
-                    bankName: 'Banco Pichincha',
-                    holderName: 'Jolus Services S.A.',
-                    accountNumber: '2201 9876 5432 1098 7654',
-                    ruc: '12345678-9',
-                    email: 'transferencias@jolus.com',
-                    type: 'Ahorros',
-                    color: const Color(0xFF535865),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 10))
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Reportar Pago',
-                    style: GoogleFonts.manrope(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF00236F),
+              const SizedBox(height: 16),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildBankCard(
+                      bankName: 'Banco Mercantil',
+                      holderName: 'Jolus Services S.A.',
+                      accountNumber: '0105 1234 5678 9012 3456',
+                      ruc: '12345678-9',
+                      email: 'pagos@jolus-services.com',
+                      type: 'Corriente',
+                      color: const Color(0xFF002266),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  _buildReportField('Nombre Completo', 'Ej: Juan Pérez', controller: _nameController),
-                  const SizedBox(height: 16),
-                  _buildReportField('Número de Identificación', 'Cédula o Pasaporte', controller: _idController),
-                  const SizedBox(height: 16),
-                  _buildReportField('Fecha de Pago', 'Hoy', suffixIcon: Icons.calendar_today_outlined, enabled: false),
-                  const SizedBox(height: 16),
-                  _buildReportField('Nombre del Banco', 'Banco emisor', controller: _bankController),
-                  const SizedBox(height: 16),
-                  _buildReportField('Correo Electrónico', 'usuario@ejemplo.com', controller: _emailController),
-                  const SizedBox(height: 16),
-                  _buildReportField('Monto Pagado', '\$ ${widget.total.toStringAsFixed(2)}', enabled: false),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Recibo de Pago',
-                    style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey[700]),
-                  ),
-                  const SizedBox(height: 12),
-                  GestureDetector(
-                    onTap: _isUploading ? null : _pickImage,
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 32),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF4F6FC),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: _imageFile != null ? Colors.green : Colors.blue.withOpacity(0.2), 
-                          style: BorderStyle.solid
-                        ),
+                    const SizedBox(width: 16),
+                    _buildBankCard(
+                      bankName: 'Banco Pichincha',
+                      holderName: 'Jolus Services S.A.',
+                      accountNumber: '2201 9876 5432 1098 7654',
+                      ruc: '12345678-9',
+                      email: 'transferencias@jolus.com',
+                      type: 'Ahorros',
+                      color: const Color(0xFF535865),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 32),
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 10))
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Reportar Pago',
+                      style: GoogleFonts.manrope(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF00236F),
                       ),
-                      child: Column(
-                        children: [
-                          Icon(
-                            _imageFile != null ? Icons.check_circle_rounded : Icons.cloud_upload_rounded, 
-                            color: _imageFile != null ? Colors.green : const Color(0xFF00236F), 
-                            size: 32
+                    ),
+                    const SizedBox(height: 24),
+                    _buildReportField('Nombre Completo', 'Ej: Juan Pérez', controller: _nameController),
+                    const SizedBox(height: 16),
+                    _buildReportField('Número de Identificación', 'Cédula o Pasaporte', controller: _idController),
+                    const SizedBox(height: 16),
+                    _buildReportField('Fecha de Pago', 'Hoy', suffixIcon: Icons.calendar_today_outlined, enabled: false),
+                    const SizedBox(height: 16),
+                    _buildReportField('Nombre del Banco', 'Banco emisor', controller: _bankController),
+                    const SizedBox(height: 16),
+                    _buildReportField('Correo Electrónico', 'usuario@ejemplo.com', controller: _emailController),
+                    const SizedBox(height: 16),
+                    _buildReportField('Monto Pagado', '\$ ${widget.total.toStringAsFixed(2)}', enabled: false),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Recibo de Pago',
+                      style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey[700]),
+                    ),
+                    const SizedBox(height: 12),
+                    GestureDetector(
+                      onTap: _isUploading ? null : _pickImage,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 32),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF4F6FC),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: _imageFile != null ? Colors.green : Colors.blue.withOpacity(0.2), 
+                            style: BorderStyle.solid
                           ),
-                          const SizedBox(height: 12),
-                          Text(
-                            _imageFile != null ? 'Comprobante seleccionado' : 'Subir comprobante',
-                            style: GoogleFonts.inter(
-                              fontSize: 14, 
-                              fontWeight: FontWeight.bold, 
-                              color: _imageFile != null ? Colors.green : const Color(0xFF00236F)
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(
+                              _imageFile != null ? Icons.check_circle_rounded : Icons.cloud_upload_rounded, 
+                              color: _imageFile != null ? Colors.green : const Color(0xFF00236F), 
+                              size: 32
                             ),
-                          ),
-                          if (_imageFile != null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: Text(
-                                _imageFile!.name,
-                                style: GoogleFonts.inter(fontSize: 11, color: Colors.grey[600]),
-                                textAlign: TextAlign.center,
+                            const SizedBox(height: 12),
+                            Text(
+                              _imageFile != null ? 'Comprobante seleccionado' : 'Subir comprobante',
+                              style: GoogleFonts.inter(
+                                fontSize: 14, 
+                                fontWeight: FontWeight.bold, 
+                                color: _imageFile != null ? Colors.green : const Color(0xFF00236F)
                               ),
                             ),
+                            if (_imageFile != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  _imageFile!.name,
+                                  style: GoogleFonts.inter(fontSize: 11, color: Colors.grey[600]),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Soporta JPG, PNG (Máx. 5MB)',
+                              style: GoogleFonts.inter(fontSize: 11, color: Colors.grey[500]),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0F6FF),
+                  borderRadius: BorderRadius.circular(12),
+                  border: const Border(left: BorderSide(color: Color(0xFF00236F), width: 4)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.info_rounded, color: Color(0xFF00236F), size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Información importante',
+                            style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFF00236F)),
+                          ),
                           const SizedBox(height: 4),
                           Text(
-                            'Soporta JPG, PNG (Máx. 5MB)',
-                            style: GoogleFonts.inter(fontSize: 11, color: Colors.grey[500]),
+                            'Asegúrese de que toda la información sea correcta antes de enviarla. Su pago se procesará en un plazo de 1-3 días hábiles tras la verificación.',
+                            style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF00236F).withOpacity(0.7), height: 1.4),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF0F6FF),
-                borderRadius: BorderRadius.circular(12),
-                border: const Border(left: BorderSide(color: Color(0xFF00236F), width: 4)),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(Icons.info_rounded, color: Color(0xFF00236F), size: 20),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Información importante',
-                          style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFF00236F)),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Asegúrese de que toda la información sea correcta antes de enviarla. Su pago se procesará en un plazo de 1-3 días hábiles tras la verificación.',
-                          style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF00236F).withOpacity(0.7), height: 1.4),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: _isUploading ? null : _submitPayment,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF001F60),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 0,
+                  ],
                 ),
-                child: _isUploading
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : Text(
-                      'Enviar Pago',
-                      style: GoogleFonts.manrope(fontSize: 15, fontWeight: FontWeight.bold),
-                    ),
               ),
-            ),
-            const SizedBox(height: 40),
-          ],
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: _isUploading ? null : _submitPayment,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF001F60),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 0,
+                  ),
+                  child: _isUploading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : Text(
+                        'Enviar Pago',
+                        style: GoogleFonts.manrope(fontSize: 15, fontWeight: FontWeight.bold),
+                      ),
+                ),
+              ),
+              const SizedBox(height: 40),
+            ],
+          ),
         ),
       ),
     );

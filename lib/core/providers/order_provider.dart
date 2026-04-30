@@ -26,10 +26,15 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
+  Future<List<DateTime>> getReservedDates() async {
+    return await _dbService.getReservedDates();
+  }
+
   Future<String?> placeOrder({
     required String userId,
     required double total,
     required List<CartItem> items,
+    DateTime? fecha,
     String? direccion,
     String? metodoPago,
     String? telefono,
@@ -43,6 +48,7 @@ class OrderProvider extends ChangeNotifier {
         userId: userId,
         total: total,
         items: items,
+        fecha: fecha,
         direccion: direccion,
         metodoPago: metodoPago,
         telefono: telefono,
@@ -61,6 +67,22 @@ class OrderProvider extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> cancelOrder(String orderId) async {
+    try {
+      // 1. Borrar de la base de datos (DatabaseService ya maneja pedido_items y pedidos)
+      await _dbService.deleteOrder(orderId);
+      
+      // 2. Borrar de la lista local para actualizar la UI (Historial) inmediatamente
+      _orders.removeWhere((order) => order.id.toString() == orderId);
+      
+      notifyListeners();
+      debugPrint('Pedido $orderId eliminado del sistema y de la UI.');
+    } catch (e) {
+      debugPrint('Error al cancelar pedido en Provider: $e');
+      rethrow;
     }
   }
 }
