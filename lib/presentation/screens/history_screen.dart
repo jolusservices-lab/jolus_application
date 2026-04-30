@@ -4,14 +4,32 @@ import 'package:provider/provider.dart';
 import '../../core/theme/colors.dart';
 import '../../core/providers/order_provider.dart';
 
-class HistoryScreen extends StatelessWidget {
+class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
+
+  @override
+  State<HistoryScreen> createState() => _HistoryScreenState();
+}
+
+class _HistoryScreenState extends State<HistoryScreen> {
+  String _selectedFilter = 'Todos';
 
   @override
   Widget build(BuildContext context) {
     final orderProvider = Provider.of<OrderProvider>(context);
-    final orders = orderProvider.orders;
-    final double totalSpent = orders.fold(0, (sum, item) => sum + item.total);
+    
+    // Filtrar los pedidos localmente
+    final orders = orderProvider.orders.where((order) {
+      if (_selectedFilter == 'Todos') return true;
+      if (_selectedFilter == 'Completados') return order.estado.toLowerCase() == 'completado';
+      if (_selectedFilter == 'Pendientes') return order.estado.toLowerCase() == 'pendiente';
+      if (_selectedFilter == 'Anulados') return order.estado.toLowerCase() == 'anulado' || order.estado.toLowerCase() == 'cancelado';
+      return true;
+    }).toList();
+
+    final double totalSpent = orderProvider.orders
+        .where((o) => o.estado.toLowerCase() == 'completado')
+        .fold(0, (sum, item) => sum + item.total);
 
     return Scaffold(
       backgroundColor: JolusColors.background,
@@ -31,15 +49,6 @@ class HistoryScreen extends StatelessWidget {
           ),
         ),
         centerTitle: true,
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 12),
-            child: CircleAvatar(
-              radius: 16,
-              backgroundImage: NetworkImage('https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200'),
-            ),
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -53,9 +62,9 @@ class HistoryScreen extends StatelessWidget {
                 children: [
                   _buildStatCard('Total Invertido', '\$${totalSpent.toStringAsFixed(2)}'),
                   const SizedBox(width: 12),
-                  _buildStatCard('Compras Totales', '${orders.length}'),
+                  _buildStatCard('Compras Totales', '${orderProvider.orders.length}'),
                   const SizedBox(width: 12),
-                  _buildStatCard('Pedidos Recientes', '${orders.length > 5 ? 5 : orders.length}'),
+                  _buildStatCard('En Proceso', '${orderProvider.orders.where((o) => o.estado.toLowerCase() == 'pendiente').length}'),
                 ],
               ),
             ),
@@ -67,13 +76,13 @@ class HistoryScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Row(
                 children: [
-                  _buildFilterChip('Todos', isSelected: true),
+                  _buildFilterChip('Todos'),
                   const SizedBox(width: 8),
                   _buildFilterChip('Completados'),
                   const SizedBox(width: 8),
-                  _buildFilterChip('Próximos'),
-                  const SizedBox(width: 8),
                   _buildFilterChip('Pendientes'),
+                  const SizedBox(width: 8),
+                  _buildFilterChip('Anulados'),
                 ],
               ),
             ),
@@ -86,15 +95,30 @@ class HistoryScreen extends StatelessWidget {
                   ? Center(
                       child: Padding(
                         padding: const EdgeInsets.all(40.0),
-                        child: Text(
-                          'Aún no tienes pedidos registrados.',
-                          style: GoogleFonts.inter(color: Colors.grey),
+                        child: Column(
+                          children: [
+                            Icon(Icons.history_rounded, size: 64, color: Colors.grey[300]),
+                            const SizedBox(height: 16),
+                            Text(
+                              _selectedFilter == 'Todos' 
+                                ? 'Aún no tienes pedidos registrados.'
+                                : 'No hay pedidos con el estado "$_selectedFilter".',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.inter(color: Colors.grey),
+                            ),
+                          ],
                         ),
                       ),
                     )
                   : Column(
                       children: orders.map((order) {
                         final String displayId = order.id?.toString() ?? '---';
+                        
+                        // Determinar color por estado
+                        Color statusColor = Colors.orange;
+                        if (order.estado.toLowerCase() == 'completado') statusColor = Colors.green;
+                        if (order.estado.toLowerCase() == 'anulado' || order.estado.toLowerCase() == 'cancelado') statusColor = Colors.red;
+
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 16),
                           child: _buildHistoryItem(
@@ -102,7 +126,7 @@ class HistoryScreen extends StatelessWidget {
                             date: "${order.fecha.day}/${order.fecha.month}/${order.fecha.year}",
                             price: '\$${order.total.toStringAsFixed(2)}',
                             status: order.estado,
-                            statusColor: order.estado == 'completado' ? Colors.green : Colors.orange,
+                            statusColor: statusColor,
                             icon: Icons.shopping_bag_outlined,
                             actionText: 'Ver detalles >',
                           ),
@@ -127,7 +151,7 @@ class HistoryScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
+                        color: Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -150,10 +174,10 @@ class HistoryScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Has completado 24 servicios. Obtén un 15% de descuento en tu próxima reserva de Limpieza.',
+                      'Obtén beneficios exclusivos por ser un cliente recurrente de Jolus Services.',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
-                        color: Colors.white.withValues(alpha: 0.8),
+                        color: Colors.white.withOpacity(0.8),
                         fontSize: 13,
                       ),
                     ),
@@ -168,7 +192,7 @@ class HistoryScreen extends StatelessWidget {
                         elevation: 0,
                       ),
                       child: Text(
-                        'Canjear Cupón',
+                        'Más información',
                         style: GoogleFonts.manrope(fontWeight: FontWeight.bold),
                       ),
                     ),
@@ -190,7 +214,7 @@ class HistoryScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: JolusColors.outlineVariant.withValues(alpha: 0.3)),
+        border: Border.all(color: JolusColors.outlineVariant.withOpacity(0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -213,19 +237,27 @@ class HistoryScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFilterChip(String label, {bool isSelected = false}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      decoration: BoxDecoration(
-        color: isSelected ? JolusColors.primary : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isSelected ? JolusColors.primary : JolusColors.outlineVariant.withValues(alpha: 0.5)),
-      ),
-      child: Text(
-        label,
-        style: GoogleFonts.inter(
-          color: isSelected ? Colors.white : Colors.grey[600],
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+  Widget _buildFilterChip(String label) {
+    final bool isSelected = _selectedFilter == label;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedFilter = label;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? JolusColors.primary : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: isSelected ? JolusColors.primary : JolusColors.outlineVariant.withOpacity(0.5)),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.inter(
+            color: isSelected ? Colors.white : Colors.grey[600],
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+          ),
         ),
       ),
     );
@@ -245,7 +277,7 @@ class HistoryScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: JolusColors.outlineVariant.withValues(alpha: 0.3)),
+        border: Border.all(color: JolusColors.outlineVariant.withOpacity(0.3)),
       ),
       child: Column(
         children: [
@@ -254,7 +286,7 @@ class HistoryScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: JolusColors.primary.withValues(alpha: 0.05),
+                  color: JolusColors.primary.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: JolusColors.primary, size: 24),
@@ -274,7 +306,7 @@ class HistoryScreen extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: statusColor.withValues(alpha: 0.1),
+                            color: statusColor.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
@@ -287,10 +319,10 @@ class HistoryScreen extends StatelessWidget {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                status,
+                                status.toUpperCase(),
                                 style: GoogleFonts.inter(
                                   color: statusColor,
-                                  fontSize: 11,
+                                  fontSize: 10,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
