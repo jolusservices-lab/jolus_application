@@ -202,6 +202,20 @@ class DatabaseService {
     }
   }
 
+  Future<Map<String, dynamic>?> getPaymentReceipt(String orderId) async {
+    try {
+      final data = await _supabase
+          .from('comprobantesPagos')
+          .select()
+          .eq('order_id', orderId)
+          .maybeSingle();
+      return data;
+    } catch (e) {
+      print('Error al obtener comprobante: $e');
+      return null;
+    }
+  }
+
   Future<void> deleteOrder(String orderId) async {
     try {
       // Al eliminar el pedido, los items se deberían eliminar por cascada en la DB 

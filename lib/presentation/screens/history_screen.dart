@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/colors.dart';
 import '../../core/providers/order_provider.dart';
 import '../../core/models/order_model.dart';
+import '../../core/services/database_service.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -33,6 +34,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         .fold(0, (sum, item) => sum + item.total);
 
     final int completedCount = orderProvider.orders.where((o) => o.estado.toLowerCase() == 'completado').length;
+    final int pendingCount = orderProvider.orders.where((o) => o.estado.toLowerCase() == 'pendiente').length;
     final int cancelledCount = orderProvider.orders.where((o) => o.estado.toLowerCase() == 'anulado' || o.estado.toLowerCase() == 'cancelado').length;
 
     return Scaffold(
@@ -67,6 +69,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   _buildStatCard('Total Invertido', '\$${totalSpent.toStringAsFixed(2)}'),
                   const SizedBox(width: 12),
                   _buildStatCard('Completados', '$completedCount', color: Colors.green),
+                  const SizedBox(width: 12),
+                  _buildStatCard('Pendientes', '$pendingCount', color: Colors.orange),
                   const SizedBox(width: 12),
                   _buildStatCard('Anulados', '$cancelledCount', color: Colors.red),
                 ],
@@ -202,7 +206,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  void _showOrderDetails(BuildContext context, OrderModel order) {
+  void _showOrderDetails(BuildContext context, OrderModel order) async {
+    final dbService = DatabaseService();
+    final receiptData = await dbService.getPaymentReceipt(order.id.toString());
+
+    if (!context.mounted) return;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -237,6 +246,26 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 if (order.comentario != null && order.comentario!.isNotEmpty)
                   _buildDetailRow('Comentario:', order.comentario!),
                 const Divider(height: 32),
+                if (receiptData != null && receiptData['file_url'] != null) ...[
+                  Text(
+                    'Comprobante de Pago:',
+                    style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      receiptData['file_url'],
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return const Center(child: CircularProgressIndicator());
+                      },
+                      errorBuilder: (context, error, stackTrace) => const Text('Error al cargar imagen del comprobante'),
+                    ),
+                  ),
+                  const Divider(height: 32),
+                ],
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
