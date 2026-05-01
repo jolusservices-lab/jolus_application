@@ -55,7 +55,7 @@ class AuthService {
     try {
       await _supabase.auth.resetPasswordForEmail(
         email,
-        redirectTo: 'io.supabase.flutter://reset-callback',
+        redirectTo: 'io.supabase.flutter://callback',
       );
     } catch (e) {
       print('Error al solicitar reinicio de contraseña: $e');

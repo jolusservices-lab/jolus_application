@@ -77,7 +77,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           'HOLA, ${userProvider.name} ${userProvider.subname}'.toUpperCase().trim(),
                           style: GoogleFonts.manrope(
                             fontWeight: FontWeight.w800,
-                            color: JolusColors.primary,
+                            color: const Color(0xFF00236F),
                             fontSize: 15,
                             letterSpacing: 0.5,
                           ),
@@ -213,22 +213,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: JolusColors.outlineVariant.withOpacity(0.3)),
+        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
-            style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[600]),
+            style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 8),
           Text(
             value,
             style: GoogleFonts.manrope(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: color ?? JolusColors.primary,
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: color ?? const Color(0xFF1F6FE5),
             ),
           ),
         ],
@@ -244,12 +247,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
           _selectedFilter = label;
         });
       },
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? JolusColors.primary : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isSelected ? JolusColors.primary : JolusColors.outlineVariant.withOpacity(0.5)),
+          color: isSelected ? const Color(0xFF1F6FE5) : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: isSelected ? const Color(0xFF1F6FE5) : Colors.grey.withOpacity(0.2)),
+          boxShadow: isSelected ? [
+            BoxShadow(color: const Color(0xFF1F6FE5).withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))
+          ] : null,
         ),
         child: Text(
           label,
@@ -309,6 +316,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 _buildDetailRow('Teléfono:', order.telefonoContacto ?? 'No especificado'),
                 if (order.comentario != null && order.comentario!.isNotEmpty)
                   _buildDetailRow('Comentario:', order.comentario!),
+                if (order.observaciones != null && order.observaciones!.isNotEmpty)
+                  _buildDetailRow('Observaciones:', order.observaciones!),
                 const Divider(height: 32),
                 if (receiptData != null && receiptData['url_comprobante'] != null) ...[
                   Text(

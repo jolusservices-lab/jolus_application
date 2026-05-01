@@ -115,6 +115,7 @@ class DatabaseService {
     String? metodoPago,
     String? telefono,
     String? comentario,
+    String? observaciones,
   }) async {
     try {
       // 1. Insertar el pedido (cabecera)
@@ -126,6 +127,7 @@ class DatabaseService {
         'metodo_pago': metodoPago,
         'telefono_contacto': telefono,
         'comentario': comentario,
+        'observaciones': observaciones,
       }).select().single();
 
       final String pedidoId = orderResponse['id'].toString();

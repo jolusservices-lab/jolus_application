@@ -17,6 +17,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   // plugins.
   ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 
+  // Registro del protocolo para Deep Linking en Windows (solo para desarrollo/ejecución)
+  // Nota: En producción, esto lo suele hacer el instalador (MSIX/InnoSetup)
+  system("reg add HKEY_CURRENT_USER\\Software\\Classes\\io.supabase.flutter /ve /t REG_SZ /d \"URL:jolus_application Protocol\" /f");
+  system("reg add HKEY_CURRENT_USER\\Software\\Classes\\io.supabase.flutter /v \"URL Protocol\" /t REG_SZ /d \"\" /f");
+  system("reg add HKEY_CURRENT_USER\\Software\\Classes\\io.supabase.flutter\\shell\\open\\command /ve /t REG_SZ /d \"\\\"%~dp0jolus_application.exe\\\" \\\"%%1\\\"\" /f");
+
   flutter::DartProject project(L"data");
 
   std::vector<std::string> command_line_arguments =

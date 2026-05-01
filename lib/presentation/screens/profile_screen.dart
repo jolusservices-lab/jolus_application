@@ -233,11 +233,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(
+                        Text(
                             'HOLA, ${user.name} ${user.subname}'.toUpperCase().trim(),
                             style: GoogleFonts.manrope(
                               fontWeight: FontWeight.w800,
-                              color: JolusColors.primary,
+                              color: const Color(0xFF00236F),
                               fontSize: 15,
                               letterSpacing: 0.5,
                             ),
@@ -325,7 +325,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       style: GoogleFonts.manrope(
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
-                        color: JolusColors.primary,
+                        color: const Color(0xFF00236F),
                       ),
                     ),
                     Text(
@@ -346,13 +346,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     ListTile(
                       onTap: () => setState(() => _isInfoExpanded = !_isInfoExpanded),
-                      leading: const Icon(Icons.person_outline, color: JolusColors.primary),
+                      leading: const Icon(Icons.person_outline, color: Color(0xFF1F6FE5)),
                       title: Text(
                         'Información Personal',
                         style: GoogleFonts.manrope(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: JolusColors.primary,
+                          color: const Color(0xFF00236F),
                         ),
                       ),
                       trailing: Icon(
@@ -389,13 +389,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     style: OutlinedButton.styleFrom(
                                       padding: const EdgeInsets.symmetric(vertical: 14),
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                      side: BorderSide(color: _isEditing ? Colors.red : JolusColors.primary),
+                                      side: BorderSide(color: _isEditing ? Colors.red : const Color(0xFF1F6FE5)),
                                     ),
                                     child: Text(
                                       _isEditing ? 'Cancelar' : 'Editar Información',
                                       style: GoogleFonts.inter(
                                         fontWeight: FontWeight.bold,
-                                        color: _isEditing ? Colors.red : JolusColors.primary,
+                                        color: _isEditing ? Colors.red : const Color(0xFF1F6FE5),
                                       ),
                                     ),
                                   ),
@@ -422,7 +422,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         }
                                       },
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: JolusColors.primary,
+                                        backgroundColor: const Color(0xFF1F6FE5),
                                         foregroundColor: Colors.white,
                                         padding: const EdgeInsets.symmetric(vertical: 14),
                                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -463,13 +463,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     ListTile(
                       onTap: () => setState(() => _isSocialExpanded = !_isSocialExpanded),
-                      leading: const Icon(Icons.share_outlined, color: JolusColors.primary),
+                      leading: const Icon(Icons.share_outlined, color: Color(0xFF1F6FE5)),
                       title: Text(
                         'Contactanos',
                         style: GoogleFonts.manrope(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: JolusColors.primary,
+                          color: const Color(0xFF00236F),
                         ),
                       ),
                       trailing: Icon(

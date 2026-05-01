@@ -22,7 +22,7 @@ class ServiceDetailScreen extends StatelessWidget {
             backgroundColor: Colors.white,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new, color: JolusColors.primaryDarkBlue),
+              icon: const Icon(Icons.arrow_back_ios_new, color: JolusColors.darkBlue),
               onPressed: () => Navigator.pop(context),
             ),
             flexibleSpace: FlexibleSpaceBar(
@@ -79,7 +79,7 @@ class ServiceDetailScreen extends StatelessWidget {
                     style: GoogleFonts.manrope(
                       fontSize: 28,
                       fontWeight: FontWeight.w800,
-                      color: JolusColors.primaryDarkBlue,
+                      color: JolusColors.darkBlue,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -99,6 +99,7 @@ class ServiceDetailScreen extends StatelessWidget {
                     style: GoogleFonts.manrope(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
+                      color: JolusColors.darkBlue,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -135,9 +136,10 @@ class ServiceDetailScreen extends StatelessWidget {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: const Text('Añadido al carrito'),
+                  backgroundColor: JolusColors.darkBlue,
                   behavior: SnackBarBehavior.floating,
                   duration: const Duration(milliseconds: 1500),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               );
             },
@@ -166,14 +168,15 @@ class ServiceDetailScreen extends StatelessWidget {
         const SizedBox(width: 12),
         Text(
           '$title:',
-          style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: JolusColors.secondaryText),
+          style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: JolusColors.onSurfaceVariant),
         ),
         const SizedBox(width: 8),
         Text(
           value,
-          style: GoogleFonts.inter(color: JolusColors.primaryDarkBlue),
+          style: GoogleFonts.inter(color: JolusColors.darkBlue, fontWeight: FontWeight.w600),
         ),
       ],
     );
   }
+
 }

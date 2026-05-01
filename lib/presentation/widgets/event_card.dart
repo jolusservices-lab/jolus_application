@@ -93,7 +93,7 @@ class EventCard extends StatelessWidget {
                         const SizedBox(width: 2),
                         Text(
                           '5.0',
-                          style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 10, color: JolusColors.primaryDarkBlue),
+                          style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 10, color: JolusColors.darkBlue),
                         ),
                       ],
                     ),
@@ -113,7 +113,7 @@ class EventCard extends StatelessWidget {
                     style: GoogleFonts.manrope(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
-                      color: JolusColors.primaryDarkBlue,
+                      color: JolusColors.darkBlue,
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -123,7 +123,7 @@ class EventCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
                       fontSize: 11,
-                      color: JolusColors.secondaryText,
+                      color: JolusColors.onSurfaceVariant,
                       height: 1.3,
                     ),
                   ),

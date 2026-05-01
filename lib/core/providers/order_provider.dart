@@ -39,6 +39,7 @@ class OrderProvider extends ChangeNotifier {
     String? metodoPago,
     String? telefono,
     String? comentario,
+    String? observaciones,
   }) async {
     _isLoading = true;
     notifyListeners();
@@ -53,6 +54,7 @@ class OrderProvider extends ChangeNotifier {
         metodoPago: metodoPago,
         telefono: telefono,
         comentario: comentario,
+        observaciones: observaciones,
       );
 
       if (pedidoId != null) {
@@ -87,6 +89,7 @@ class OrderProvider extends ChangeNotifier {
           metodoPago: _orders[index].metodoPago,
           telefonoContacto: _orders[index].telefonoContacto,
           comentario: _orders[index].comentario,
+          observaciones: _orders[index].observaciones,
         );
         notifyListeners();
       }

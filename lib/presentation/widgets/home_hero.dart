@@ -91,7 +91,7 @@ class HomeHero extends StatelessWidget {
                             style: GoogleFonts.manrope(
                               fontSize: 32,
                               fontWeight: FontWeight.w800,
-                              color: JolusColors.primaryDarkBlue,
+                              color: JolusColors.darkBlue,
                               height: 1.1,
                             ),
                           ),
@@ -115,7 +115,7 @@ class HomeHero extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
                       fontSize: 14,
-                      color: JolusColors.secondaryText,
+                      color: JolusColors.onSurfaceVariant,
                       fontWeight: FontWeight.w500,
                     ),
                   ),

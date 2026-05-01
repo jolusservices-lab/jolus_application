@@ -8,6 +8,7 @@ import '../../core/providers/user_provider.dart';
 import '../../core/providers/order_provider.dart';
 import '../../core/services/database_service.dart';
 import '../../core/models/payment_receipt_model.dart';
+import '../../core/theme/colors.dart';
 import '../widgets/main_navigation.dart';
 
 class PaymentDetailScreen extends StatefulWidget {
@@ -128,40 +129,51 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
         context: context,
         barrierDismissible: false,
         builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Icon(Icons.check_circle_outline, color: Colors.green, size: 60),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: JolusColors.success.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check_circle_outline, color: JolusColors.success, size: 60),
+              ),
+              const SizedBox(height: 24),
               Text(
                 '¡Pago Reportado!',
                 style: GoogleFonts.manrope(
-                  fontSize: 20,
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFF00236F),
+                  color: JolusColors.darkBlue,
                 ),
               ),
               const SizedBox(height: 12),
               Text(
                 'Hemos recibido tu comprobante. Tu pedido entrará en proceso de verificación (1-3 días hábiles).',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.inter(color: Colors.grey[600]),
+                style: GoogleFonts.inter(color: Colors.grey[600], fontSize: 14),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: JolusColors.primaryBlue,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 0,
+                  ),
+                  child: Text('Entendido', style: GoogleFonts.manrope(fontWeight: FontWeight.bold, fontSize: 16)),
+                ),
               ),
             ],
           ),
-          actions: [
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00236F),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: Text('Entendido', style: GoogleFonts.manrope(color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
-            ),
-          ],
         ),
       );
 
@@ -175,19 +187,50 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Icon(Icons.error_outline, color: Colors.redAccent, size: 60),
-          content: Text(
-            'Ocurrió un error al reportar tu pago: $e',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(color: Colors.grey[600]),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: JolusColors.error.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.error_outline, color: JolusColors.error, size: 60),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Error al reportar',
+                style: GoogleFonts.manrope(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: JolusColors.darkBlue,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Ocurrió un error al reportar tu pago: $e',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(color: Colors.grey[600]),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: JolusColors.primaryBlue,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: Text('Reintentar', style: GoogleFonts.manrope(fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Reintentar', style: GoogleFonts.manrope(fontWeight: FontWeight.bold)),
-            ),
-          ],
         ),
       );
     } finally {
@@ -202,7 +245,7 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           '¿Cancelar pedido?',
-          style: GoogleFonts.manrope(fontWeight: FontWeight.bold, color: const Color(0xFF00236F)),
+          style: GoogleFonts.manrope(fontWeight: FontWeight.bold, color: JolusColors.darkBlue),
         ),
         content: Text(
           'Si regresas ahora, el pedido se cancelará y deberás agendarlo nuevamente.',
@@ -216,7 +259,7 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
+              backgroundColor: JolusColors.error,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
             child: Text('Aceptar y Cancelar', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -249,13 +292,13 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8F9FE),
+        backgroundColor: JolusColors.background,
         appBar: AppBar(
           backgroundColor: Colors.white,
           elevation: 0,
           toolbarHeight: 70,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Color(0xFF00236F)),
+            icon: const Icon(Icons.arrow_back, color: JolusColors.darkBlue),
             onPressed: () async {
               final bool shouldPop = await _onWillPop();
               if (shouldPop && context.mounted) {
@@ -267,7 +310,7 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
             'Detalles de Pago',
             style: GoogleFonts.manrope(
               fontWeight: FontWeight.bold,
-              color: const Color(0xFF00236F),
+              color: JolusColors.darkBlue,
               fontSize: 18,
             ),
           ),
@@ -282,7 +325,7 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
                 style: GoogleFonts.manrope(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFF00236F),
+                  color: JolusColors.darkBlue,
                 ),
               ),
               const SizedBox(height: 16),
@@ -328,24 +371,22 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
                     Text(
                       'Reportar Pago',
                       style: GoogleFonts.manrope(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF00236F),
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: JolusColors.darkBlue,
                       ),
                     ),
                     const SizedBox(height: 24),
                     _buildReportField('Nombre Completo', 'Ej: Juan Pérez', controller: _nameController),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     _buildReportField('Número de Identificación', 'Cédula o Pasaporte', controller: _idController),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     _buildReportField('Número de Comprobante', 'Ej: 12345678', controller: _receiptNumberController),
-                    const SizedBox(height: 16),
-                    _buildReportField('Fecha de Pago', 'Hoy', suffixIcon: Icons.calendar_today_outlined, enabled: false),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     _buildReportField('Nombre del Banco', 'Banco emisor', controller: _bankController),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     _buildReportField('Correo Electrónico', 'usuario@ejemplo.com', controller: _emailController),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     _buildReportField('Monto Pagado', '\$ ${widget.total.toStringAsFixed(2)}', enabled: false),
                     const SizedBox(height: 24),
                     Text(
@@ -359,10 +400,10 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 32),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF4F6FC),
+                          color: JolusColors.lightBlue,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: _imageFile != null ? Colors.green : Colors.blue.withOpacity(0.2), 
+                            color: _imageFile != null ? JolusColors.success : JolusColors.primaryBlue.withOpacity(0.2), 
                             style: BorderStyle.solid
                           ),
                         ),
@@ -370,7 +411,7 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
                           children: [
                             Icon(
                               _imageFile != null ? Icons.check_circle_rounded : Icons.cloud_upload_rounded, 
-                              color: _imageFile != null ? Colors.green : const Color(0xFF00236F), 
+                              color: _imageFile != null ? JolusColors.success : JolusColors.darkBlue, 
                               size: 32
                             ),
                             const SizedBox(height: 12),
@@ -379,7 +420,7 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
                               style: GoogleFonts.inter(
                                 fontSize: 14, 
                                 fontWeight: FontWeight.bold, 
-                                color: _imageFile != null ? Colors.green : const Color(0xFF00236F)
+                                color: _imageFile != null ? JolusColors.success : JolusColors.darkBlue
                               ),
                             ),
                             if (_imageFile != null)
@@ -407,14 +448,14 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF0F6FF),
+                  color: JolusColors.lightBlue,
                   borderRadius: BorderRadius.circular(12),
-                  border: const Border(left: BorderSide(color: Color(0xFF00236F), width: 4)),
+                  border: const Border(left: BorderSide(color: JolusColors.darkBlue, width: 4)),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.info_rounded, color: Color(0xFF00236F), size: 20),
+                    const Icon(Icons.info_rounded, color: JolusColors.darkBlue, size: 20),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -422,12 +463,12 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
                         children: [
                           Text(
                             'Información importante',
-                            style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFF00236F)),
+                            style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold, color: JolusColors.darkBlue),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             'Asegúrese de que toda la información sea correcta antes de enviarla. Su pago se procesará en un plazo de 1-3 días hábiles tras la verificación.',
-                            style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF00236F).withOpacity(0.7), height: 1.4),
+                            style: GoogleFonts.inter(fontSize: 11, color: JolusColors.darkBlue.withOpacity(0.7), height: 1.4),
                           ),
                         ],
                       ),
@@ -438,20 +479,21 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
               const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
-                height: 56,
+                height: 60,
                 child: ElevatedButton(
                   onPressed: _isUploading ? null : _submitPayment,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF001F60),
+                    backgroundColor: JolusColors.primaryBlue,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 4,
+                    shadowColor: JolusColors.primaryBlue.withOpacity(0.4),
                   ),
                   child: _isUploading
                     ? const CircularProgressIndicator(color: Colors.white)
                     : Text(
-                        'Enviar Pago',
-                        style: GoogleFonts.manrope(fontSize: 15, fontWeight: FontWeight.bold),
+                        'Enviar Reporte de Pago',
+                        style: GoogleFonts.manrope(fontSize: 17, fontWeight: FontWeight.bold),
                       ),
                 ),
               ),

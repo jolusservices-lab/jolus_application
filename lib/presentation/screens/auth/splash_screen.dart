@@ -1,7 +1,9 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'login_screen.dart';
+import '../../widgets/main_navigation.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -21,13 +23,28 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       duration: const Duration(seconds: 10),
     )..repeat();
 
-    Future.delayed(const Duration(seconds: 4), () {
-      if (!mounted) return;
+    _checkSession();
+  }
+
+  Future<void> _checkSession() async {
+    // Dar tiempo a la animación y a la inicialización de Supabase
+    await Future.delayed(const Duration(seconds: 3));
+    
+    if (!mounted) return;
+
+    final session = Supabase.instance.client.auth.currentSession;
+    
+    if (session != null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const MainNavigation()),
+      );
+    } else {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
-    });
+    }
   }
 
   @override
