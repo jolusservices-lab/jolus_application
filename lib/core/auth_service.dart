@@ -51,6 +51,29 @@ class AuthService {
     await _supabase.auth.signOut();
   }
 
+  Future<void> resetPassword(String email) async {
+    try {
+      await _supabase.auth.resetPasswordForEmail(
+        email,
+        redirectTo: 'io.supabase.flutter://reset-callback',
+      );
+    } catch (e) {
+      print('Error al solicitar reinicio de contraseña: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> updatePassword(String newPassword) async {
+    try {
+      await _supabase.auth.updateUser(
+        UserAttributes(password: newPassword),
+      );
+    } catch (e) {
+      print('Error al actualizar contraseña: $e');
+      rethrow;
+    }
+  }
+
   User? get currentUser => _supabase.auth.currentUser;
   Stream<AuthState> get authStateChanges => _supabase.auth.onAuthStateChange;
 }

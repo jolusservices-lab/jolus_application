@@ -8,6 +8,7 @@ import '../../../core/services/database_service.dart';
 import '../../../core/providers/user_provider.dart';
 import 'register_screen.dart';
 import 'welcome_screen.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -238,7 +239,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                                 TextButton(
-                                  onPressed: () {},
+                                  onPressed: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()),
+                                  ),
                                   style: TextButton.styleFrom(
                                     padding: EdgeInsets.zero, 
                                     minimumSize: Size.zero, 

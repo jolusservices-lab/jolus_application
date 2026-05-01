@@ -8,6 +8,7 @@ import 'core/providers/user_provider.dart';
 import 'core/providers/order_provider.dart';
 import 'core/providers/navigation_provider.dart';
 import 'presentation/screens/auth/splash_screen.dart';
+import 'presentation/screens/auth/update_password_screen.dart';
 import 'core/supabase_config.dart';
 import 'core/services/database_service.dart';
 
@@ -62,6 +63,16 @@ class _JolusAppState extends State<JolusApp> {
       final Session? session = data.session;
 
       debugPrint('DEBUG AUTH: Evento detectado: $event');
+
+      if (event == AuthChangeEvent.passwordRecovery) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const UpdatePasswordScreen()),
+          );
+        });
+      }
 
       if ((event == AuthChangeEvent.signedIn || event == AuthChangeEvent.initialSession) && session != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) async {
