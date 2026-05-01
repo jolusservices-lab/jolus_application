@@ -114,4 +114,9 @@ class OrderProvider extends ChangeNotifier {
       rethrow;
     }
   }
+
+  void clearOrders() {
+    _orders = [];
+    notifyListeners();
+  }
 }

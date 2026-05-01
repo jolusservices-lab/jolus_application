@@ -253,4 +253,25 @@ class DatabaseService {
     }
     return null;
   }
+
+  // --- NOTIFICACIONES ---
+  Future<void> createNotification({
+    String? userId,
+    required String title,
+    required String message,
+    required String type,
+    Map<String, dynamic>? data,
+  }) async {
+    try {
+      await _supabase.from('notificaciones').insert({
+        'user_id': userId,
+        'titulo': title,
+        'mensaje': message,
+        'tipo': type,
+        'data': data,
+      });
+    } catch (e) {
+      print('Error al crear notificación: $e');
+    }
+  }
 }

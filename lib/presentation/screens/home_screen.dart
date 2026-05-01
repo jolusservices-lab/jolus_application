@@ -5,6 +5,7 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import '../../core/theme/colors.dart';
 import '../../core/models/service_model.dart';
 import '../../core/providers/navigation_provider.dart';
+import '../../core/providers/notification_provider.dart';
 import '../../core/services/database_service.dart';
 import '../widgets/home_hero.dart';
 import '../widgets/category_item.dart';
@@ -82,12 +83,47 @@ class _HomeScreenState extends State<HomeScreen> {
                   top: 10,
                   right: 15,
                   child: SafeArea(
-                    child: IconButton(
-                      onPressed: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const NotificationsScreen()),
-                      ),
-                      icon: const Icon(Icons.notifications_none_rounded, color: JolusColors.darkBlue, size: 30),
+                    child: Consumer<NotificationProvider>(
+                      builder: (context, notifProvider, _) {
+                        final unreadCount = notifProvider.unreadCount;
+                        return IconButton(
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+                          ),
+                          icon: Stack(
+                            children: [
+                              const Icon(Icons.notifications_none_rounded, color: JolusColors.darkBlue, size: 30),
+                              if (unreadCount > 0)
+                                Positioned(
+                                  right: 0,
+                                  top: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(color: Colors.white, width: 1.5),
+                                    ),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 16,
+                                      minHeight: 16,
+                                    ),
+                                    child: Text(
+                                      '$unreadCount',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),
