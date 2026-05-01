@@ -10,7 +10,6 @@ import '../widgets/home_hero.dart';
 import '../widgets/category_item.dart';
 import '../widgets/event_card.dart';
 import '../widgets/event_card_skeleton.dart';
-import '../widgets/premium_banner.dart';
 import 'notifications_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -319,11 +318,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            const SizedBox(height: 20),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: PremiumBanner(),
-            ),
             const SizedBox(height: 40),
           ],
         ),

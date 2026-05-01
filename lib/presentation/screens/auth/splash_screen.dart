@@ -76,17 +76,17 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               children: [
                 // Glowing Logo Card
                 Container(
-                  width: 110,
-                  height: 110,
-                  padding: const EdgeInsets.all(20),
+                  width: 220,
+                  height: 220,
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(30),
+                    borderRadius: BorderRadius.circular(40),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF1F6FE5).withOpacity(0.4),
-                        blurRadius: 40,
-                        spreadRadius: 2,
+                        color: const Color(0xFF1F6FE5).withOpacity(0.5),
+                        blurRadius: 60,
+                        spreadRadius: 8,
                       ),
                     ],
                   ),
@@ -96,7 +96,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) => const Icon(
                         Icons.business,
-                        size: 64,
+                        size: 120,
                         color: Color(0xFF00236F),
                       ),
                     ),
