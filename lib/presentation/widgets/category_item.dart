@@ -74,7 +74,7 @@ class _CategoryItemState extends State<CategoryItem> with SingleTickerProviderSt
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6), // Reducido de 8 a 6 para ganar espacio
               Padding(
                 padding: const EdgeInsets.only(left: 4),
                 child: Text(
@@ -83,7 +83,7 @@ class _CategoryItemState extends State<CategoryItem> with SingleTickerProviderSt
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.manrope(
-                    fontSize: 13,
+                    fontSize: 12, // Reducido ligeramente de 13 a 12
                     fontWeight: FontWeight.w800,
                     color: const Color(0xFF2D3E50),
                   ),

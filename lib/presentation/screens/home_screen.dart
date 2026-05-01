@@ -173,7 +173,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Column(
                 children: [
                   SizedBox(
-                    height: (screenWidth * 0.42).clamp(135.0, 170.0), // Aún más ajustado
+                    height: (screenWidth * 0.42).clamp(150.0, 185.0), // Ajustado para evitar desbordamiento (mínimo era 135)
                     child: Stack(
                       children: [
                         PageView.builder(
