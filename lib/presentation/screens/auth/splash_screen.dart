@@ -1,6 +1,6 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../core/theme/colors.dart';
 import 'login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -10,11 +10,18 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 3), () {
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 10),
+    )..repeat();
+
+    Future.delayed(const Duration(seconds: 4), () {
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
@@ -24,94 +31,210 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topRight,
-                end: Alignment.bottomLeft,
-                colors: [
-                  JolusColors.primary.withValues(alpha: 0.05),
-                  Colors.white,
-                  JolusColors.tertiary.withValues(alpha: 0.05),
-                ],
-              ),
-            ),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: RadialGradient(
+            center: Alignment.center,
+            radius: 1.2,
+            colors: [
+              Color(0xFF001D3D),
+              Color(0xFF000814),
+            ],
           ),
-          Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // Orbits with glowing dots
+            AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) {
+                return Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    _buildOrbit(radius: 130, rotation: _controller.value * 2 * math.pi, dots: 3, opacity: 0.15),
+                    _buildOrbit(radius: 180, rotation: -_controller.value * 1.5 * math.pi, dots: 2, opacity: 0.1),
+                    _buildOrbit(radius: 240, rotation: _controller.value * 0.8 * math.pi, dots: 4, opacity: 0.08),
+                  ],
+                );
+              },
+            ),
+            
+            // Main Content
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // Glowing Logo Card
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  width: 110,
+                  height: 110,
+                  padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: JolusColors.outlineVariant),
+                    borderRadius: BorderRadius.circular(30),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      )
+                        color: const Color(0xFF1F6FE5).withOpacity(0.4),
+                        blurRadius: 40,
+                        spreadRadius: 2,
+                      ),
                     ],
                   ),
-                  child: const Icon(Icons.auto_awesome, size: 64, color: JolusColors.primary),
+                  child: Center(
+                    child: Image.asset(
+                      'assets/images/jolus_logo.png',
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                        Icons.business,
+                        size: 64,
+                        color: Color(0xFF00236F),
+                      ),
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 40),
+                
+                // Brand Name
                 Text(
                   'Jolus Services',
                   style: GoogleFonts.manrope(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: JolusColors.primary,
+                    fontSize: 40,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    letterSpacing: -0.5,
                   ),
                 ),
+                const SizedBox(height: 8),
+                
+                // Subtitle
                 Text(
                   'PREMIUM EVENT MANAGEMENT',
                   style: GoogleFonts.inter(
-                    fontSize: 12,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    letterSpacing: 2,
-                    color: Colors.blueGrey,
+                    letterSpacing: 4,
+                    color: Colors.white.withOpacity(0.6),
                   ),
                 ),
-              ],
-            ),
-          ),
-          Positioned(
-            bottom: 48,
-            left: 0,
-            right: 0,
-            child: Column(
-              children: [
-                const SizedBox(
-                  width: 180,
-                  child: LinearProgressIndicator(
-                    backgroundColor: JolusColors.surfaceLow,
-                    color: JolusColors.primary,
+                
+                const SizedBox(height: 120),
+                
+                // Custom Glowing Progress Bar
+                Container(
+                  width: 280,
+                  height: 3,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Stack(
+                    children: [
+                      AnimatedBuilder(
+                        animation: _controller,
+                        builder: (context, child) {
+                          // Simular progreso suave
+                          double progress = (_controller.value * 2.5).clamp(0.0, 1.0);
+                          return Container(
+                            width: 280 * progress,
+                            height: 3,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF1F6FE5), Colors.white],
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF1F6FE5).withOpacity(0.8),
+                                  blurRadius: 12,
+                                  spreadRadius: 1,
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                
+                const SizedBox(height: 48),
+                
+                // Loading text with icon
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.sync, size: 14, color: JolusColors.onSurfaceVariant),
-                    const SizedBox(width: 8),
+                    const Icon(Icons.sync, size: 18, color: Colors.white60),
+                    const SizedBox(width: 12),
                     Text(
                       'Cargando experiencia premium...',
-                      style: GoogleFonts.inter(fontSize: 12, color: JolusColors.onSurfaceVariant),
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        color: Colors.white60,
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
                   ],
                 ),
               ],
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOrbit({
+    required double radius, 
+    required double rotation, 
+    int dots = 0,
+    required double opacity,
+  }) {
+    return Transform.rotate(
+      angle: rotation,
+      child: Container(
+        width: radius * 2,
+        height: radius * 2,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.white.withOpacity(opacity),
+            width: 1.5,
           ),
-        ],
+        ),
+        child: Stack(
+          children: List.generate(dots, (index) {
+            final double angle = (index * 2 * math.pi) / dots;
+            return Positioned(
+              left: radius + radius * math.cos(angle) - 4,
+              top: radius + radius * math.sin(angle) - 4,
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF1F6FE5),
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ),
       ),
     );
   }
