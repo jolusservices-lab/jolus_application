@@ -19,7 +19,7 @@ class ServiceDetailScreen extends StatelessWidget {
           SliverAppBar(
             expandedHeight: 400,
             pinned: true,
-            backgroundColor: JolusColors.primary,
+            backgroundColor: JolusColors.primaryBlue,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
               onPressed: () => Navigator.pop(context),
@@ -28,9 +28,12 @@ class ServiceDetailScreen extends StatelessWidget {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.network(
-                    service.imagen ?? 'https://via.placeholder.com/800',
-                    fit: BoxFit.cover,
+                  Hero(
+                    tag: 'service_${service.id}',
+                    child: Image.network(
+                      service.imagen ?? 'https://via.placeholder.com/800',
+                      fit: BoxFit.cover,
+                    ),
                   ),
                   const DecoratedBox(
                     decoration: BoxDecoration(
@@ -58,24 +61,24 @@ class ServiceDetailScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: JolusColors.primary.withValues(alpha: 0.1),
+                          color: JolusColors.primaryBlue.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
                           service.categoria.toUpperCase(),
                           style: GoogleFonts.inter(
-                            color: JolusColors.primary,
+                            color: JolusColors.primaryBlue,
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
                           ),
                         ),
                       ),
                       Text(
-                        '\$${service.precio}',
+                        '\$${service.precio.toInt()}',
                         style: GoogleFonts.manrope(
                           fontSize: 24,
                           fontWeight: FontWeight.w800,
-                          color: JolusColors.primary,
+                          color: JolusColors.primaryBlue,
                         ),
                       ),
                     ],
@@ -86,7 +89,7 @@ class ServiceDetailScreen extends StatelessWidget {
                     style: GoogleFonts.manrope(
                       fontSize: 28,
                       fontWeight: FontWeight.w800,
-                      color: JolusColors.onBackground,
+                      color: JolusColors.primaryDarkBlue,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -149,12 +152,12 @@ class ServiceDetailScreen extends StatelessWidget {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: JolusColors.primary,
+              backgroundColor: JolusColors.primaryBlue,
               foregroundColor: Colors.white,
               minimumSize: const Size(double.infinity, 56),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              elevation: 4, // Añadimos una pequeña elevación al botón para que destaque
-              shadowColor: JolusColors.primary.withOpacity(0.4),
+              elevation: 4,
+              shadowColor: JolusColors.primaryBlue.withOpacity(0.4),
             ),
             child: Text(
               'Añadir al Carrito',
@@ -169,16 +172,16 @@ class ServiceDetailScreen extends StatelessWidget {
   Widget _buildInfoRow(IconData icon, String title, String value) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: JolusColors.primary),
+        Icon(icon, size: 20, color: JolusColors.primaryBlue),
         const SizedBox(width: 12),
         Text(
           '$title:',
-          style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: JolusColors.onSurfaceVariant),
+          style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: JolusColors.secondaryText),
         ),
         const SizedBox(width: 8),
         Text(
           value,
-          style: GoogleFonts.inter(color: JolusColors.onBackground),
+          style: GoogleFonts.inter(color: JolusColors.primaryDarkBlue),
         ),
       ],
     );

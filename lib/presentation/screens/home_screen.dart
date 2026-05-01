@@ -1,227 +1,368 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import '../../core/theme/colors.dart';
 import '../../core/models/service_model.dart';
 import '../../core/providers/navigation_provider.dart';
-import '../../core/providers/user_provider.dart';
-import '../widgets/category_carousel.dart';
-import '../widgets/service_card.dart';
+import '../../core/services/database_service.dart';
+import '../widgets/home_hero.dart';
+import '../widgets/category_item.dart';
+import '../widgets/event_card.dart';
+import '../widgets/premium_banner.dart';
 import 'notifications_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final PageController _pageController = PageController();
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final navProvider = context.read<NavigationProvider>();
-    final userProvider = context.watch<UserProvider>();
+    final dbService = DatabaseService();
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    // Categorías actualizadas con imágenes más grandes y específicas
+    final List<Map<String, dynamic>> categories = [
+      {
+        'label': 'Animaciones',
+        'image': 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?q=80&w=400'
+      },
+      {
+        'label': 'Buffet',
+        'image': 'https://images.unsplash.com/photo-1555244162-803834f70033?q=80&w=400'
+      },
+      {
+        'label': 'Coctelería',
+        'image': 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=400'
+      },
+      {
+        'label': 'Decoraciones',
+        'image': 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=400'
+      },
+      {
+        'label': 'Entretenimiento',
+        'image': 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=400'
+      },
+      {
+        'label': 'Mobiliario',
+        'image': 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?q=80&w=400' // Sillas Tiffany y mesas
+      },
+    ];
+
+    // Responsive Logic: Small screens use PageView, Large screens use Scrollable Row
+    final bool isSmallScreen = screenWidth < 700;
 
     return Scaffold(
-      backgroundColor: JolusColors.background,
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            floating: true,
-            backgroundColor: Colors.white,
-            surfaceTintColor: Colors.white,
-            elevation: 0,
-            toolbarHeight: 70,
-            leading: Padding(
-              padding: const EdgeInsets.only(left: 16.0),
-              child: Center(
-                child: CircleAvatar(
-                  radius: 18,
-                  backgroundColor: JolusColors.surfaceLow,
-                  backgroundImage: userProvider.photoUrl != null 
-                      ? NetworkImage(userProvider.photoUrl!) 
-                      : null,
-                  child: userProvider.photoUrl == null 
-                      ? const Icon(Icons.person, color: JolusColors.primary, size: 20)
-                      : null,
-                ),
-              ),
-            ),
-            title: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+      backgroundColor: Colors.white,
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
               children: [
-                Text(
-                  userProvider.id.isEmpty ? 'Jolus Services' : 'HOLA, ${userProvider.name} ${userProvider.subname}'.toUpperCase().trim(),
-                  style: GoogleFonts.manrope(
-                    fontWeight: FontWeight.bold,
-                    color: JolusColors.primary,
-                    fontSize: 16,
+                HomeHero(
+                  onCatalogTap: () => navProvider.setSelectedIndex(1),
+                ),
+                // Logo centrado arriba
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: SafeArea(
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 10),
+                        const Icon(Icons.all_inclusive, color: JolusColors.primaryBlue, size: 36),
+                        Text(
+                          'JOLUS',
+                          style: GoogleFonts.manrope(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 22,
+                            color: JolusColors.primaryDarkBlue,
+                            letterSpacing: 2,
+                            height: 1.0,
+                          ),
+                        ),
+                        Text(
+                          '— SERVICES —',
+                          style: GoogleFonts.inter(
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            color: JolusColors.primaryDarkBlue,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                Text(
-                  userProvider.id.isEmpty ? 'Bienvenido a nuestra plataforma' : '¿Qué servicio necesitas hoy?',
-                  style: GoogleFonts.inter(
-                    color: JolusColors.onSurfaceVariant.withOpacity(0.6),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
+                // Botones de Menu y Notificaciones
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        IconButton(
+                          onPressed: () {},
+                          icon: const Icon(Icons.menu, color: JolusColors.primaryDarkBlue, size: 28),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+                          ),
+                          icon: const Icon(Icons.notifications_none_rounded, color: JolusColors.primaryDarkBlue, size: 28),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
             ),
-            actions: [
-              IconButton(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const NotificationsScreen()),
-                ),
-                icon: const Icon(Icons.notifications_outlined, color: JolusColors.primary),
-              ),
-              const SizedBox(width: 8),
-            ],
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                TextField(
-                  decoration: InputDecoration(
-                    hintText: '¿Qué servicio necesitas hoy?',
-                    hintStyle: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14),
-                    prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                  ),
-                ),
-                const SizedBox(height: 24),
 
-                Container(
-                  height: 160,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFF0D1B3E), Color(0xFF1E3A8A)],
-                    ),
-                  ),
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'OFERTA EXCLUSIVA',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          letterSpacing: 1.2,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '20% Off en Buffet Premium',
-                        style: GoogleFonts.manrope(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Válido para eventos este fin de semana',
-                        style: TextStyle(color: Colors.white60, fontSize: 13),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 32),
+            const SizedBox(height: 10),
 
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
+            // CATEGORIES SECTION
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
                       'Categorías',
                       style: GoogleFonts.manrope(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: JolusColors.onSurfaceVariant,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: JolusColors.primaryDarkBlue,
                       ),
                     ),
-                    TextButton(
-                      onPressed: () => navProvider.setCategory('Todos'),
-                      child: Text(
-                        'Ver todas',
-                        style: GoogleFonts.inter(
-                          color: JolusColors.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                const CategoryCarousel(),
-
-                const SizedBox(height: 32),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Servicios Destacados',
-                      style: GoogleFonts.manrope(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: JolusColors.onSurfaceVariant,
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () => navProvider.setSelectedIndex(1),
-                      child: Text(
-                        'Explorar',
-                        style: GoogleFonts.inter(
-                          color: JolusColors.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                ServiceCard(
-                  service: ServiceModel(
-                    id: 'eb7617b3-652a-430c-87d4-e696f9260641',
-                    nombre: 'Buffet Ejecutivo Premium',
-                    precio: 45.0,
-                    descripcion: 'Servicio completo para eventos corporativos con opciones gourmet...',
-                    imagen: 'https://images.unsplash.com/photo-1555244162-803834f70033?q=80&w=800',
-                    categoria: 'Premium',
-                    servicio: 'Buffet',
-                    cantidad: 1,
                   ),
-                ),
-                const SizedBox(height: 16),
-                ServiceCard(
-                  service: ServiceModel(
-                    id: '3c754668-2321-4f93-b1d7-27b03138b71d',
-                    nombre: 'Barra Móvil de Cócteles',
-                    precio: 280.0,
-                    descripcion: 'Mixología creativa para bodas y fiestas privadas. Incluye insumos y barra...',
-                    imagen: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=800',
-                    categoria: 'VIP',
-                    servicio: 'Coctelería',
-                    cantidad: 1,
+                  TextButton(
+                    onPressed: () => navProvider.setSelectedIndex(1),
+                    child: Text(
+                      'Ver todas',
+                      style: GoogleFonts.inter(
+                        color: JolusColors.primaryBlue,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 24),
-              ]),
+                ],
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            
+            if (isSmallScreen)
+              // VIEWPORT FOR MOBILE (PageView + Dots + Arrows)
+              Column(
+                children: [
+                  SizedBox(
+                    height: (screenWidth * 0.42).clamp(135.0, 170.0), // Aún más ajustado
+                    child: Stack(
+                      children: [
+                        PageView.builder(
+                          controller: _pageController,
+                          itemCount: categories.length,
+                          itemBuilder: (context, index) {
+                            final cat = categories[index];
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                              child: CategoryItem(
+                                label: cat['label'],
+                                imageUrl: cat['image'],
+                                onTap: () {
+                                  navProvider.setCategory(cat['label']);
+                                  navProvider.setSelectedIndex(1);
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                        // Left Arrow
+                        Positioned(
+                          left: 0,
+                          top: 0,
+                          bottom: 0,
+                          child: Center(
+                            child: IconButton(
+                              icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: JolusColors.primaryBlue),
+                              onPressed: () {
+                                if (_pageController.page == 0) {
+                                  _pageController.animateToPage(
+                                    categories.length - 1,
+                                    duration: const Duration(milliseconds: 400),
+                                    curve: Curves.easeInOut,
+                                  );
+                                } else {
+                                  _pageController.previousPage(
+                                    duration: const Duration(milliseconds: 300), 
+                                    curve: Curves.easeInOut
+                                  );
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                        // Right Arrow
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          bottom: 0,
+                          child: Center(
+                            child: IconButton(
+                              icon: const Icon(Icons.arrow_forward_ios_rounded, size: 20, color: JolusColors.primaryBlue),
+                              onPressed: () {
+                                if (_pageController.page == categories.length - 1) {
+                                  _pageController.animateToPage(
+                                    0,
+                                    duration: const Duration(milliseconds: 400),
+                                    curve: Curves.easeInOut,
+                                  );
+                                } else {
+                                  _pageController.nextPage(
+                                    duration: const Duration(milliseconds: 300), 
+                                    curve: Curves.easeInOut
+                                  );
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 0), // Eliminado espacio entre carrusel e indicador
+                  GestureDetector(
+                    onTapUp: (details) {
+                      // El SmoothPageIndicator nativamente soporta clics si se envuelve en un widget que detecte posición o usando su controller
+                    },
+                    child: SmoothPageIndicator(
+                      controller: _pageController,
+                      count: categories.length,
+                      onDotClicked: (index) => _pageController.animateToPage(
+                        index,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      ),
+                      effect: const ExpandingDotsEffect(
+                        dotHeight: 7,
+                        dotWidth: 7,
+                        activeDotColor: JolusColors.primaryBlue,
+                        dotColor: JolusColors.borders,
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            else
+              // LARGE SCREEN: Fill all available space
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: Row(
+                  children: categories.map((cat) {
+                    return Expanded(
+                      child: CategoryItem(
+                        label: cat['label'],
+                        imageUrl: cat['image'],
+                        onTap: () {
+                          navProvider.setCategory(cat['label']);
+                          navProvider.setSelectedIndex(1);
+                        },
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+
+            const SizedBox(height: 32),
+
+            // FEATURED EVENTS SECTION
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Eventos destacados',
+                      style: GoogleFonts.manrope(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: JolusColors.primaryDarkBlue,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => navProvider.setSelectedIndex(1),
+                    child: Text(
+                      'Ver todos',
+                      style: GoogleFonts.inter(
+                        color: JolusColors.primaryBlue,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 380, // Adjusted to fit new Card design
+              child: FutureBuilder<List<ServiceModel>>(
+                future: dbService.getProducts(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator(color: JolusColors.primaryBlue));
+                  }
+                  
+                  final products = snapshot.data ?? [];
+                  final List<String> locations = [
+                    "Guayaquil, Ecuador",
+                    "Samborondón, Ecuador",
+                    "Quito, Ecuador",
+                    "Daule, Ecuador",
+                    "Manta, Ecuador"
+                  ];
+
+                  return ListView.builder(
+                    padding: const EdgeInsets.only(left: 20),
+                    scrollDirection: Axis.horizontal,
+                    itemCount: products.take(5).length,
+                    itemBuilder: (context, index) {
+                      return EventCard(
+                        service: products[index],
+                        location: locations[index % locations.length],
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+
+            const SizedBox(height: 20),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: PremiumBanner(),
+            ),
+            const SizedBox(height: 40),
+          ],
+        ),
       ),
     );
   }
