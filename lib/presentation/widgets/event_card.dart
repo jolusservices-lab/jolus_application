@@ -6,12 +6,10 @@ import '../screens/service_detail_screen.dart';
 
 class EventCard extends StatelessWidget {
   final ServiceModel service;
-  final String location;
 
   const EventCard({
     super.key,
     required this.service,
-    required this.location,
   });
 
   @override
@@ -118,24 +116,20 @@ class EventCard extends StatelessWidget {
                       color: JolusColors.primaryDarkBlue,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on, color: JolusColors.primaryBlue, size: 14),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          location,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.inter(fontSize: 11, color: JolusColors.secondaryText),
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: 6),
+                  Text(
+                    service.descripcion,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: JolusColors.secondaryText,
+                      height: 1.3,
+                    ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   const Divider(height: 1, color: Color(0xFFF1F7FF)),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   Text(
                     '\$${service.precio.toInt()}',
                     style: GoogleFonts.manrope(

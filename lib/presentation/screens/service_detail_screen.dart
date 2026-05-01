@@ -19,32 +19,22 @@ class ServiceDetailScreen extends StatelessWidget {
           SliverAppBar(
             expandedHeight: 400,
             pinned: true,
-            backgroundColor: JolusColors.primaryBlue,
+            backgroundColor: Colors.white,
+            elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+              icon: const Icon(Icons.arrow_back_ios_new, color: JolusColors.primaryDarkBlue),
               onPressed: () => Navigator.pop(context),
             ),
             flexibleSpace: FlexibleSpaceBar(
-              background: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Hero(
-                    tag: 'service_${service.id}',
-                    child: Image.network(
-                      service.imagen ?? 'https://via.placeholder.com/800',
-                      fit: BoxFit.cover,
-                    ),
+              background: Container(
+                color: Colors.white,
+                child: Hero(
+                  tag: 'service_${service.id}',
+                  child: Image.network(
+                    service.imagen ?? 'https://via.placeholder.com/800',
+                    fit: BoxFit.contain,
                   ),
-                  const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Colors.black26, Colors.transparent, Colors.black54],
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),

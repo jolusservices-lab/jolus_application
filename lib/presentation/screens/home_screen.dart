@@ -347,7 +347,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     itemBuilder: (context, index) {
                       return EventCard(
                         service: products[index],
-                        location: locations[index % locations.length],
                       );
                     },
                   );
