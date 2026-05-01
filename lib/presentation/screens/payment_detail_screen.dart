@@ -121,22 +121,74 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
       await Provider.of<OrderProvider>(context, listen: false)
           .updateOrderStatus(widget.orderId, 'en revisión');
 
-      if (!mounted) return;
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pago reportado con éxito. Procesando verificación.')),
-      );
-      
       cart.clear();
       
+      if (!mounted) return;
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Icon(Icons.check_circle_outline, color: Colors.green, size: 60),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '¡Pago Reportado!',
+                style: GoogleFonts.manrope(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF00236F),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Hemos recibido tu comprobante. Tu pedido entrará en proceso de verificación (1-3 días hábiles).',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(color: Colors.grey[600]),
+              ),
+            ],
+          ),
+          actions: [
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF00236F),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: Text('Entendido', style: GoogleFonts.manrope(color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ],
+        ),
+      );
+
+      if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => const MainNavigation()),
         (route) => false,
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al reportar pago: $e')),
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Icon(Icons.error_outline, color: Colors.redAccent, size: 60),
+          content: Text(
+            'Ocurrió un error al reportar tu pago: $e',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(color: Colors.grey[600]),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Reintentar', style: GoogleFonts.manrope(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
       );
     } finally {
       if (mounted) setState(() => _isUploading = false);

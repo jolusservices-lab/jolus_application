@@ -9,6 +9,7 @@ import '../../core/services/database_service.dart';
 import '../widgets/home_hero.dart';
 import '../widgets/category_item.dart';
 import '../widgets/event_card.dart';
+import '../widgets/event_card_skeleton.dart';
 import '../widgets/premium_banner.dart';
 import 'notifications_screen.dart';
 
@@ -77,44 +78,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 HomeHero(
                   onCatalogTap: () => navProvider.setSelectedIndex(1),
                 ),
-                // Logo centrado arriba
+                // Botón de Notificaciones (Mantener en la esquina superior derecha)
                 Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
+                  top: 10,
+                  right: 15,
                   child: SafeArea(
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 5),
-                        Image.asset(
-                          'assets/images/jolus_logo.png',
-                          height: 85,
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) => const Icon(
-                            Icons.all_inclusive,
-                            color: JolusColors.primaryBlue,
-                            size: 36,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                // Botones de Menu y Notificaciones
-                SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        IconButton(
-                          onPressed: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const NotificationsScreen()),
-                          ),
-                          icon: const Icon(Icons.notifications_none_rounded, color: JolusColors.primaryDarkBlue, size: 28),
-                        ),
-                      ],
+                    child: IconButton(
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+                      ),
+                      icon: const Icon(Icons.notifications_none_rounded, color: JolusColors.primaryDarkBlue, size: 30),
                     ),
                   ),
                 ),
@@ -314,7 +288,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 future: dbService.getProducts(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator(color: JolusColors.primaryBlue));
+                    return ListView.builder(
+                      padding: const EdgeInsets.only(left: 20),
+                      scrollDirection: Axis.horizontal,
+                      itemCount: 3,
+                      itemBuilder: (context, index) => const EventCardSkeleton(),
+                    );
                   }
                   
                   final products = snapshot.data ?? [];

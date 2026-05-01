@@ -12,7 +12,7 @@ class HomeHero extends StatelessWidget {
     final size = MediaQuery.of(context).size;
     return SizedBox(
       width: double.infinity,
-      height: 400,
+      height: 480, // Aumentado para dar espacio al logo y contenido
       child: Stack(
         children: [
           // 1. Fondo celeste con curva inferior (Onda de fondo suave)
@@ -53,10 +53,28 @@ class HomeHero extends StatelessWidget {
             ),
           ),
 
+          // 2.5 Logo de la Empresa (Posicionado para destacar)
+          Positioned(
+            top: 0,
+            left: 10,
+            child: SafeArea(
+              child: Image.asset(
+                'assets/images/jolus_logo.png',
+                height: 200, // Aumentado para máxima visibilidad
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => const Icon(
+                  Icons.all_inclusive,
+                  color: JolusColors.primaryBlue,
+                  size: 40,
+                ),
+              ),
+            ),
+          ),
+
           // 3. Contenido de texto (Izquierda)
           Positioned(
             left: 20,
-            top: 110,
+            top: 220, // Bajado considerablemente para no solaparse con el logo
             child: SizedBox(
               width: size.width * 0.65, // Aumentado ligeramente para mayor margen
               child: Column(
