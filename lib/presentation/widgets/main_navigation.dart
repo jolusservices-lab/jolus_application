@@ -4,6 +4,7 @@ import '../../core/theme/colors.dart';
 import '../../core/providers/navigation_provider.dart';
 import '../../core/providers/cart_provider.dart';
 import '../../core/providers/user_provider.dart';
+import '../../core/providers/order_provider.dart';
 import '../screens/home_screen.dart';
 import '../screens/services_screen.dart';
 import '../screens/cart_screen.dart';
@@ -85,13 +86,25 @@ class _MainNavigationState extends State<MainNavigation> {
     );
   }
 
+  void _onItemTapped(int index) {
+    final navProvider = context.read<NavigationProvider>();
+    final userProvider = context.read<UserProvider>();
+    final orderProvider = context.read<OrderProvider>();
+
+    navProvider.setSelectedIndex(index);
+
+    if (index == 3 && userProvider.id.isNotEmpty) {
+      orderProvider.fetchOrders(userProvider.id);
+    }
+  }
+
   Widget _buildNavItem(int index, IconData unselectedIcon, IconData selectedIcon, NavigationProvider provider, {int badgeCount = 0}) {
     final isSelected = provider.selectedIndex == index;
     final color = isSelected ? JolusColors.primaryBlue : const Color(0xFF65676B);
     
     return Expanded(
       child: GestureDetector(
-        onTap: () => provider.setSelectedIndex(index),
+        onTap: () => _onItemTapped(index),
         behavior: HitTestBehavior.opaque,
         child: Column(
           children: [
@@ -157,7 +170,7 @@ class _MainNavigationState extends State<MainNavigation> {
     
     return Expanded(
       child: GestureDetector(
-        onTap: () => provider.setSelectedIndex(index),
+        onTap: () => _onItemTapped(index),
         behavior: HitTestBehavior.opaque,
         child: Column(
           children: [
