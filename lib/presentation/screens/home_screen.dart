@@ -85,25 +85,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: SafeArea(
                     child: Column(
                       children: [
-                        const SizedBox(height: 10),
-                        const Icon(Icons.all_inclusive, color: JolusColors.primaryBlue, size: 36),
-                        Text(
-                          'JOLUS',
-                          style: GoogleFonts.manrope(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 22,
-                            color: JolusColors.primaryDarkBlue,
-                            letterSpacing: 2,
-                            height: 1.0,
-                          ),
-                        ),
-                        Text(
-                          '— SERVICES —',
-                          style: GoogleFonts.inter(
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                            color: JolusColors.primaryDarkBlue,
-                            letterSpacing: 1,
+                        const SizedBox(height: 5),
+                        Image.asset(
+                          'assets/images/jolus_logo.png',
+                          height: 85,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) => const Icon(
+                            Icons.all_inclusive,
+                            color: JolusColors.primaryBlue,
+                            size: 36,
                           ),
                         ),
                       ],
@@ -115,12 +105,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        IconButton(
-                          onPressed: () {},
-                          icon: const Icon(Icons.menu, color: JolusColors.primaryDarkBlue, size: 28),
-                        ),
                         IconButton(
                           onPressed: () => Navigator.push(
                             context,
