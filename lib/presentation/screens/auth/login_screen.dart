@@ -38,7 +38,6 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final supabase = Supabase.instance.client;
       
-      // 1. Iniciar sesión en Supabase Auth
       final AuthResponse res = await supabase.auth.signInWithPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
@@ -46,14 +45,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final user = res.user;
       if (user != null) {
-        // 2. Obtener información extendida de la tabla 'usuarios'
         final userData = await DatabaseService().getUser(user.id);
         
         if (mounted) {
           final userProvider = context.read<UserProvider>();
           
           if (userData != null) {
-            // Sincronizar provider con los datos de la tabla 'usuarios'
             await userProvider.updateProfile(
               name: userData.name ?? '',
               subname: userData.subname ?? '',
@@ -61,7 +58,6 @@ class _LoginScreenState extends State<LoginScreen> {
               phone: userData.phone ?? '',
               address: userData.address ?? '',
             );
-            // Asegurar que el ID y photo esten seteados
             userProvider.setUser(
               id: user.id,
               name: userData.name ?? '',
@@ -70,7 +66,6 @@ class _LoginScreenState extends State<LoginScreen> {
               photoUrl: userData.photoUrl,
             );
           } else {
-            // Si no existe en la tabla usuarios (por algún error previo), sincronizar lo básico del Auth
             userProvider.syncWithSupabaseUser(user);
           }
 
@@ -107,280 +102,402 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: JolusColors.background,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                const SizedBox(height: 60),
-                Text(
-                  'Jolus Services',
-                  style: GoogleFonts.manrope(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w800,
-                    color: JolusColors.primary,
-                    letterSpacing: -0.5,
-                  ),
+      backgroundColor: const Color(0xFFF8FAFF),
+      body: Stack(
+        children: [
+          // Background Decorations (Dots/Circles based on image)
+          Positioned(
+            top: 40,
+            left: 20,
+            child: _DotsGrid(),
+          ),
+          Positioned(
+            bottom: 40,
+            right: 20,
+            child: _DotsGrid(),
+          ),
+          // Waves/Curved backgrounds
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: MediaQuery.of(context).size.height * 0.3,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, Color(0xFFE7F1FF)],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Bienvenido de nuevo. Inicia sesión en tu cuenta.',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    color: JolusColors.onSurfaceVariant.withValues(alpha: 0.7),
-                  ),
-                ),
-                const SizedBox(height: 48),
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: JolusColors.outlineVariant.withValues(alpha: 0.5)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: JolusColors.primary.withValues(alpha: 0.04),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
+              ),
+            ),
+          ),
+          
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
+                child: Form(
+                  key: _formKey,
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Correo electrónico',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: JolusColors.primary,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _emailController,
-                        validator: (value) => (value == null || value.isEmpty) ? 'Ingresa tu correo' : null,
-                        decoration: InputDecoration(
-                          hintText: 'ejemplo@correo.com',
-                          prefixIcon: const Icon(Icons.mail_outline_rounded, size: 20),
-                          filled: true,
-                          fillColor: JolusColors.surfaceLow.withValues(alpha: 0.5),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
+                      // Logo and Brand Name
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(
-                            'Contraseña',
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: JolusColors.primary,
-                            ),
+                          Image.asset(
+                            'assets/images/jolus_logo.png',
+                            height: 60,
+                            errorBuilder: (context, error, stackTrace) => const Icon(Icons.business, size: 40, color: Color(0xFF0038A8)),
                           ),
-                          TextButton(
-                            onPressed: () {},
-                            style: TextButton.styleFrom(padding: EdgeInsets.zero),
-                            child: Text(
-                              '¿Olvidaste tu contraseña?',
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: JolusColors.primaryContainer,
-                              ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Jolus Services',
+                            style: GoogleFonts.manrope(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF00236F),
+                              letterSpacing: -0.5,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _passwordController,
-                        obscureText: _obscureText,
-                        validator: (value) => (value == null || value.isEmpty) ? 'Ingresa tu contraseña' : null,
-                        decoration: InputDecoration(
-                          hintText: '••••••••',
-                          prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscureText ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                              size: 20,
+                      const SizedBox(height: 12),
+                      Text(
+                        'Bienvenido de nuevo. Inicia sesión en tu cuenta.',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+                      
+                      // Central White Card
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(28),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
                             ),
-                            onPressed: () => setState(() => _obscureText = !_obscureText),
-                          ),
-                          filled: true,
-                          fillColor: JolusColors.surfaceLow.withValues(alpha: 0.5),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Correo electrónico',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF00236F),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TextFormField(
+                              controller: _emailController,
+                              validator: (value) => (value == null || value.isEmpty) ? 'Ingresa tu correo' : null,
+                              decoration: InputDecoration(
+                                hintText: 'ejemplo@correo.com',
+                                prefixIcon: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  child: const Icon(Icons.mail_outline_rounded, color: Color(0xFF1F6FE5), size: 22),
+                                ),
+                                filled: true,
+                                fillColor: Colors.white,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: Colors.grey[200]!),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: Colors.grey[200]!),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(color: Color(0xFF1F6FE5)),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Contraseña',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF00236F),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () {},
+                                  style: TextButton.styleFrom(
+                                    padding: EdgeInsets.zero, 
+                                    minimumSize: Size.zero, 
+                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap
+                                  ),
+                                  child: Text(
+                                    '¿Olvidaste tu contraseña?',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF1F6FE5),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            TextFormField(
+                              controller: _passwordController,
+                              obscureText: _obscureText,
+                              validator: (value) => (value == null || value.isEmpty) ? 'Ingresa tu contraseña' : null,
+                              decoration: InputDecoration(
+                                hintText: '••••••••',
+                                prefixIcon: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  child: const Icon(Icons.lock_outline_rounded, color: Color(0xFF1F6FE5), size: 22),
+                                ),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscureText ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                                    size: 20,
+                                    color: Colors.grey[600],
+                                  ),
+                                  onPressed: () => setState(() => _obscureText = !_obscureText),
+                                ),
+                                filled: true,
+                                fillColor: Colors.white,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: Colors.grey[200]!),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: Colors.grey[200]!),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(color: Color(0xFF1F6FE5)),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+                            // Gradient Login Button
+                            Container(
+                              width: double.infinity,
+                              height: 56,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFF0038A8), Color(0xFF5A9CF8)],
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                ),
+                              ),
+                              child: ElevatedButton(
+                                onPressed: _isLoading ? null : _handleLogin,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  shadowColor: Colors.transparent,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                                child: _isLoading 
+                                  ? const CircularProgressIndicator(color: Colors.white)
+                                  : Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        const Spacer(),
+                                        Text(
+                                          'Iniciar sesión',
+                                          style: GoogleFonts.manrope(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        const Spacer(),
+                                        const Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+                                      ],
+                                    ),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            Row(
+                              children: [
+                                Expanded(child: Divider(color: Colors.grey[200])),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  child: Text(
+                                    'o continuar con',
+                                    style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[500]),
+                                  ),
+                                ),
+                                Expanded(child: Divider(color: Colors.grey[200])),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _SocialButton(
+                                    icon: Icons.g_mobiledata,
+                                    label: 'Google',
+                                    onPressed: () async {
+                                      try {
+                                        final authService = AuthService();
+                                        final response = await authService.signInWithGoogle();
+                                        if (response?.user != null) {
+                                          if (mounted) {
+                                            final userProvider = context.read<UserProvider>();
+                                            final userData = await DatabaseService().getUser(response!.user!.id);
+                                            
+                                            if (userData != null) {
+                                              userProvider.setUser(
+                                                id: userData.id,
+                                                name: userData.name ?? '',
+                                                subname: userData.subname ?? '',
+                                                email: userData.email ?? '',
+                                                photoUrl: userData.photoUrl,
+                                              );
+                                            } else {
+                                              userProvider.syncWithSupabaseUser(response.user);
+                                            }
+
+                                            Navigator.pushReplacement(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => WelcomeScreen(
+                                                  username: userProvider.name.split(' ')[0],
+                                                  isNewAccount: false,
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        }
+                                      } catch (e) {
+                                        if (mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text('Error al iniciar sesión con Google: $e')),
+                                          );
+                                        }
+                                      }
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: _SocialButton(
+                                    icon: Icons.apple,
+                                    label: 'Apple',
+                                    onPressed: () {},
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 32),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _handleLogin,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: JolusColors.primary,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                          child: _isLoading 
-                            ? const CircularProgressIndicator(color: Colors.white)
-                            : Text(
-                                'Iniciar sesión',
-                                style: GoogleFonts.manrope(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Expanded(child: Divider(color: JolusColors.outlineVariant.withValues(alpha: 0.5))),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                          Text(
+                            '¿No tienes una cuenta? ',
+                            style: GoogleFonts.inter(color: Colors.grey[700]),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                            ),
                             child: Text(
-                              'o continuar con',
-                              style: GoogleFonts.inter(fontSize: 12, color: JolusColors.onSurfaceVariant.withValues(alpha: 0.5)),
+                              'Crear cuenta',
+                              style: GoogleFonts.inter(
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFF1F6FE5),
+                              ),
                             ),
                           ),
-                          Expanded(child: Divider(color: JolusColors.outlineVariant.withValues(alpha: 0.5))),
                         ],
                       ),
-                      const SizedBox(height: 24),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _SocialButton(
-                              icon: Icons.g_mobiledata,
-                              label: 'Google',
-                              onPressed: () async {
-                                try {
-                                  final authService = AuthService();
-                                  final response = await authService.signInWithGoogle();
-                                  if (response?.user != null) {
-                                    if (mounted) {
-                                      final userProvider = context.read<UserProvider>();
-                                      final userData = await DatabaseService().getUser(response!.user!.id);
-                                      
-                                      if (userData != null) {
-                                        userProvider.setUser(
-                                          id: userData.id,
-                                          name: userData.name ?? '',
-                                          subname: userData.subname ?? '',
-                                          email: userData.email ?? '',
-                                          photoUrl: userData.photoUrl,
-                                        );
-                                      } else {
-                                        userProvider.syncWithSupabaseUser(response.user);
-                                      }
-
-                                      Navigator.pushReplacement(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => WelcomeScreen(
-                                            username: userProvider.name.split(' ')[0],
-                                            isNewAccount: false,
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                  }
-                                } catch (e) {
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Error al iniciar sesión con Google: $e')),
-                                    );
-                                  }
-                                }
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(child: _SocialButton(icon: Icons.apple, label: 'Apple', onPressed: () {})),
-                        ],
-                      ),
+                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
-                const SizedBox(height: 32),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '¿No tienes una cuenta? ',
-                      style: GoogleFonts.inter(color: JolusColors.onSurfaceVariant),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const RegisterScreen()),
-                      ),
-                      child: Text(
-                        'Crear cuenta',
-                        style: GoogleFonts.inter(
-                          fontWeight: FontWeight.w800,
-                          color: JolusColors.primary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 40),
-                Text(
-                  '© 2024 Jolus Services. Todos los derechos reservados.',
-                  style: GoogleFonts.inter(fontSize: 11, color: JolusColors.onSurfaceVariant.withValues(alpha: 0.5)),
-                ),
-                const SizedBox(height: 24),
-              ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
 
+class _DotsGrid extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: List.generate(4, (i) => Row(
+        children: List.generate(4, (j) => Container(
+          width: 4,
+          height: 4,
+          margin: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.grey[300],
+          ),
+        )),
+      )),
+    );
+  }
+}
+
 class _SocialButton extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
   final String label;
   final VoidCallback onPressed;
 
-  const _SocialButton({required this.icon, required this.label, required this.onPressed});
+  const _SocialButton({this.icon, required this.label, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
-    return OutlinedButton.icon(
+    return OutlinedButton(
       onPressed: onPressed,
-      icon: Icon(icon, size: 24, color: JolusColors.onSurfaceVariant),
-      label: Text(
-        label,
-        style: GoogleFonts.inter(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: JolusColors.onSurfaceVariant,
-        ),
-      ),
       style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        side: BorderSide(color: JolusColors.outlineVariant.withValues(alpha: 0.5)),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        side: BorderSide(color: Colors.grey[200]!),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        backgroundColor: Colors.white,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (icon != null)
+            Icon(
+              icon, 
+              size: 24, 
+              color: label == 'Google' ? Colors.red : Colors.black
+            ),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+        ],
       ),
     );
   }
