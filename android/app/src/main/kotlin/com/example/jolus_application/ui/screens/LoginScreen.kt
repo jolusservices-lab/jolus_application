@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Apple
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.Visibility
@@ -152,8 +151,6 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                         shape = RoundedCornerShape(8.dp),
                         contentPadding = PaddingValues(vertical = 12.dp)
                     ) {
-                        Icon(Icons.Default.Apple, contentDescription = null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Spacer(modifier = Modifier.width(8.dp))
                         Text("Apple", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }

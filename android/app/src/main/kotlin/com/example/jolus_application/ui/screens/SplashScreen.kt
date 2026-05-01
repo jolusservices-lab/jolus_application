@@ -109,7 +109,7 @@ fun SplashScreen(onTimeout: () -> Unit) {
                 modifier = Modifier
                     .width(180.dp)
                     .height(4.dp)
-                    .clip(RoundedCornerShape(full = true))
+                    .clip(RoundedCornerShape(50))
                     .background(MaterialTheme.colorScheme.surfaceContainer)
             ) {
                 val infiniteTransition = rememberInfiniteTransition()
@@ -127,7 +127,7 @@ fun SplashScreen(onTimeout: () -> Unit) {
                         .fillMaxHeight()
                         .fillMaxWidth(0.33f)
                         .offset(x = 180.dp * progress)
-                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(full = true))
+                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(50))
                 )
             }
 

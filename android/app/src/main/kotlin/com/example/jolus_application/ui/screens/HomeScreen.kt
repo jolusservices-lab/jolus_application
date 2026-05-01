@@ -109,7 +109,7 @@ fun HomeScreen() {
                     Text(
                         text = "OFERTA EXCLUSIVA",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primaryFixed,
+                        color = MaterialTheme.colorScheme.primary,
                         letterSpacing = 2.sp
                     )
                     Text(
@@ -120,7 +120,7 @@ fun HomeScreen() {
                     Text(
                         text = "Válido para eventos este fin de semana",
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primaryFixed.copy(alpha = 0.9f)
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
                     )
                 }
             }
