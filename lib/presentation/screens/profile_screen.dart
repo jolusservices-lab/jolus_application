@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as path;
+import '../../core/models/social_network_model.dart';
 import '../../core/theme/colors.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/services/database_service.dart';
@@ -30,9 +31,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late TextEditingController _phoneController;
   late TextEditingController _addressController;
 
-  String _whatsapp = '...';
-  String _instagram = '...';
-  String _facebook = '...';
+  List<SocialNetworkModel> _socialNetworks = [];
+  bool _isLoadingSocial = false;
+
   String _usernameHandle = '...';
 
   @override
@@ -48,28 +49,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _fetchSocialLinks() async {
+    setState(() => _isLoadingSocial = true);
     try {
+      final networks = await DatabaseService().getSocialNetworks();
       final adminProfile = await DatabaseService().getAdminProfile();
 
       if (mounted) {
-        if (adminProfile != null) {
-          setState(() {
-            _facebook = adminProfile.linkFacebook ?? '';
-            _instagram = adminProfile.linkInstagram ?? '';
-            _whatsapp = adminProfile.linkWhatsapp ?? '';
+        setState(() {
+          _socialNetworks = networks;
+          if (adminProfile != null) {
             _usernameHandle = adminProfile.nombreUsuarioArroba ?? 'jolus_app';
-          });
-        } else {
-          setState(() {
-            _facebook = '';
-            _instagram = '';
-            _whatsapp = '';
-            _usernameHandle = '';
-          });
-        }
+          }
+          _isLoadingSocial = false;
+        });
       }
     } catch (e) {
       debugPrint('Error cargando redes sociales: $e');
+      if (mounted) setState(() => _isLoadingSocial = false);
     }
   }
 
@@ -485,29 +481,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           children: [
                             const Divider(),
                             const SizedBox(height: 16),
-                            _buildSocialTile(
-                              icon: Icons.chat_bubble_outline,
-                              iconColor: Colors.green,
-                              title: 'WhatsApp',
-                              value: _usernameHandle,
-                              onTap: () => _launchURL(_whatsapp),
-                            ),
-                            const SizedBox(height: 12),
-                            _buildSocialTile(
-                              icon: Icons.camera_alt_outlined,
-                              iconColor: Colors.pink,
-                              title: 'Instagram',
-                              value: _usernameHandle,
-                              onTap: () => _launchURL(_instagram),
-                            ),
-                            const SizedBox(height: 12),
-                            _buildSocialTile(
-                              icon: Icons.facebook_outlined,
-                              iconColor: Colors.blue,
-                              title: 'Facebook',
-                              value: _usernameHandle,
-                              onTap: () => _launchURL(_facebook),
-                            ),
+                            if (_isLoadingSocial)
+                              const Center(child: Padding(
+                                padding: EdgeInsets.all(20.0),
+                                child: CircularProgressIndicator(),
+                              ))
+                            else if (_socialNetworks.isEmpty)
+                              Center(child: Text('No hay redes configuradas', style: GoogleFonts.inter(color: Colors.grey)))
+                            else
+                              ..._socialNetworks.map((net) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12.0),
+                                child: _buildSocialTile(
+                                  icon: _getIconForType(net.tipo),
+                                  iconColor: _getColorForType(net.tipo),
+                                  title: net.nombre,
+                                  value: net.usuario,
+                                  onTap: () => _launchURL(net.url),
+                                ),
+                              )),
                             const Padding(
                               padding: EdgeInsets.symmetric(vertical: 20),
                               child: Divider(),
@@ -679,6 +670,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
     );
+  }
+
+  IconData _getIconForType(String tipo) {
+    switch (tipo.toLowerCase()) {
+      case 'whatsapp': return Icons.chat_bubble_outline;
+      case 'instagram': return Icons.camera_alt_outlined;
+      case 'facebook': return Icons.facebook_outlined;
+      case 'twitter': return Icons.alternate_email;
+      case 'web': return Icons.language;
+      default: return Icons.link;
+    }
+  }
+
+  Color _getColorForType(String tipo) {
+    switch (tipo.toLowerCase()) {
+      case 'whatsapp': return Colors.green;
+      case 'instagram': return Colors.pink;
+      case 'facebook': return Colors.blue;
+      case 'twitter': return Colors.black;
+      case 'web': return Colors.orange;
+      default: return JolusColors.primary;
+    }
   }
 }
 

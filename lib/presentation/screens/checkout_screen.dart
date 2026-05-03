@@ -6,6 +6,8 @@ import '../../core/theme/colors.dart';
 import '../../core/providers/cart_provider.dart';
 import '../../core/providers/order_provider.dart';
 import '../../core/providers/user_provider.dart';
+import '../../core/models/profile_admin_model.dart';
+import '../../core/services/database_service.dart';
 import 'payment_detail_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
@@ -20,12 +22,39 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   String _selectedTime = '10:00 AM';
   final TextEditingController _commentController = TextEditingController();
   bool _isProcessing = false;
+  double _ivaPercent = 12.0;
+  double _logisticaCost = 15.0;
+  bool _isLoadingConfig = true;
 
   final List<String> _timeSlots = [
     '08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM',
     '12:00 PM', '01:00 PM', '02:00 PM', '03:00 PM',
     '04:00 PM', '05:00 PM', '06:00 PM', '07:00 PM'
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadConfig();
+  }
+
+  Future<void> _loadConfig() async {
+    try {
+      final config = await DatabaseService().getAdminProfile();
+      if (config != null && mounted) {
+        setState(() {
+          if (config.iva != null) _ivaPercent = config.iva!;
+          if (config.logistica != null) _logisticaCost = config.logistica!;
+          _isLoadingConfig = false;
+        });
+      } else {
+        if (mounted) setState(() => _isLoadingConfig = false);
+      }
+    } catch (e) {
+      debugPrint('Error cargando configuración: $e');
+      if (mounted) setState(() => _isLoadingConfig = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -48,7 +77,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     setState(() => _isProcessing = true);
 
     try {
-      final total = (cart.totalAmount * 1.12 + 15);
+      final subtotal = cart.totalAmount;
+      final ivaAmount = subtotal * (_ivaPercent / 100);
+      final total = subtotal + ivaAmount + _logisticaCost;
       
       // Combinar fecha y hora para el objeto DateTime
       final timeParts = _selectedTime.split(' ');
@@ -93,10 +124,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (orderId != null) {
         _showSuccessDialog(orderId, total);
       } else {
-        _showErrorDialog('No se pudo procesar el pedido. Por favor, intenta de nuevo.');
+        _showErrorDialog('El servidor no devolvió un ID de pedido. Intenta de nuevo.');
       }
     } catch (e) {
-      _showErrorDialog('Ocurrió un error inesperado: $e');
+      // Aquí capturamos el error real de Supabase/Provider
+      String errorMessage = e.toString();
+      if (errorMessage.contains('403')) {
+        errorMessage = 'Error de permisos (RLS): No tienes permiso para insertar en la tabla pedidos.';
+      } else if (errorMessage.contains('null value in column')) {
+        errorMessage = 'Error: Faltan datos obligatorios en la base de datos.';
+      }
+      _showErrorDialog('Error al procesar: $errorMessage');
     } finally {
       if (mounted) setState(() => _isProcessing = false);
     }
@@ -307,10 +345,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Widget _buildSummaryCard(CartProvider cart) {
+    if (_isLoadingConfig) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
     final subtotal = cart.totalAmount;
-    final iva = subtotal * 0.12;
-    const movilizacion = 15.0;
-    final total = subtotal + iva + movilizacion;
+    final iva = subtotal * (_ivaPercent / 100);
+    final total = subtotal + iva + _logisticaCost;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -323,11 +371,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ),
       child: Column(
         children: [
-          _summaryRow('Subtotal', '$subtotal'),
+          _summaryRow('Subtotal', subtotal.toStringAsFixed(2)),
           const SizedBox(height: 12),
-          _summaryRow('IVA (12%)', iva.toStringAsFixed(2)),
+          _summaryRow('IVA (${_ivaPercent.toStringAsFixed(0)}%)', iva.toStringAsFixed(2)),
           const SizedBox(height: 12),
-          _summaryRow('Movilización', '$movilizacion'),
+          _summaryRow('Logística', _logisticaCost.toStringAsFixed(2)),
           const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Divider()),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

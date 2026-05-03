@@ -8,6 +8,7 @@ import '../../core/providers/user_provider.dart';
 import '../../core/providers/order_provider.dart';
 import '../../core/services/database_service.dart';
 import '../../core/models/payment_receipt_model.dart';
+import '../../core/models/bank_account_model.dart';
 import '../../core/theme/colors.dart';
 import '../widgets/main_navigation.dart';
 
@@ -35,20 +36,36 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
   
   XFile? _imageFile;
   bool _isUploading = false;
+  List<BankAccountModel> _bankAccounts = [];
+  bool _isLoadingBanks = true;
 
   @override
   void initState() {
     super.initState();
-    // Pre-llenar datos del usuario si están disponibles
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final user = Provider.of<UserProvider>(context, listen: false);
-      String fullName = user.name;
-      if (user.subname.isNotEmpty) {
-        fullName += ' ${user.subname}';
-      }
-      _nameController.text = fullName;
-      _emailController.text = user.email;
-    });
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    // 1. Pre-llenar datos del usuario
+    final user = Provider.of<UserProvider>(context, listen: false);
+    String fullName = user.name;
+    if (user.subname.isNotEmpty) {
+      fullName += ' ${user.subname}';
+    }
+    _nameController.text = fullName;
+    _emailController.text = user.email;
+
+    // 2. Cargar cuentas bancarias desde Supabase
+    try {
+      final accounts = await _dbService.getBankAccounts();
+      setState(() {
+        _bankAccounts = accounts;
+        _isLoadingBanks = false;
+      });
+    } catch (e) {
+      setState(() => _isLoadingBanks = false);
+      debugPrint('Error cargando cuentas: $e');
+    }
   }
 
   @override
@@ -329,32 +346,49 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _buildBankCard(
-                      bankName: 'Banco Mercantil',
-                      holderName: 'Jolus Services S.A.',
-                      accountNumber: '0105 1234 5678 9012 3456',
-                      ruc: '12345678-9',
-                      email: 'pagos@jolus-services.com',
-                      type: 'Corriente',
-                      color: const Color(0xFF002266),
-                    ),
-                    const SizedBox(width: 16),
-                    _buildBankCard(
-                      bankName: 'Banco Pichincha',
-                      holderName: 'Jolus Services S.A.',
-                      accountNumber: '2201 9876 5432 1098 7654',
-                      ruc: '12345678-9',
-                      email: 'transferencias@jolus.com',
-                      type: 'Ahorros',
-                      color: const Color(0xFF535865),
-                    ),
-                  ],
+              if (_isLoadingBanks)
+                const Center(child: CircularProgressIndicator())
+              else if (_bankAccounts.isEmpty)
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Text('No hay cuentas bancarias registradas actualmente.'),
+                )
+              else
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: _bankAccounts.map((bank) => Padding(
+                      padding: const EdgeInsets.only(right: 16),
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _bankController.text = bank.bancoNombre;
+                          });
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Seleccionado: ${bank.bancoNombre}'),
+                              duration: const Duration(seconds: 1),
+                              backgroundColor: JolusColors.primaryBlue,
+                            ),
+                          );
+                        },
+                        child: _buildBankCard(
+                          bankName: bank.bancoNombre,
+                          holderName: bank.titularNombre,
+                          accountNumber: bank.numeroCuenta,
+                          ruc: bank.ruc ?? 'N/A',
+                          email: bank.email ?? 'N/A',
+                          type: bank.tipoCuenta,
+                          color: Color(int.parse(bank.colorHex.replaceFirst('#', '0xFF'))),
+                        ),
+                      ),
+                    )).toList(),
+                  ),
                 ),
-              ),
               const SizedBox(height: 32),
               Container(
                 padding: const EdgeInsets.all(24),

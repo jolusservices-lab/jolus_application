@@ -65,7 +65,7 @@ class OrderProvider extends ChangeNotifier {
       return null;
     } catch (e) {
       debugPrint('Error al realizar el pedido: $e');
-      return null;
+      rethrow; // Propagamos el error para que la UI lo atrape y lo muestre
     } finally {
       _isLoading = false;
       notifyListeners();

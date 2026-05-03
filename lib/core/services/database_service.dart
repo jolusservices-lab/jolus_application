@@ -4,6 +4,8 @@ import '../models/user_model.dart';
 import '../models/profile_admin_model.dart';
 import '../models/payment_receipt_model.dart';
 import '../models/cart_item.dart';
+import '../models/bank_account_model.dart';
+import '../models/social_network_model.dart';
 
 class DatabaseService {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -134,7 +136,7 @@ class DatabaseService {
 
       // 2. Insertar los items del pedido
       final List<Map<String, dynamic>> itemsData = items.map((item) => {
-        'pedido_id': int.parse(pedidoId),
+        'pedido_id': orderResponse['id'], // Eliminamos int.parse para soportar UUID o Int8 directamente
         'producto_id': item.id,
         'nombre_producto': item.title,
         'cantidad': item.quantity,
@@ -146,7 +148,7 @@ class DatabaseService {
       return pedidoId;
     } catch (e) {
       print('Error al crear pedido en Supabase: $e');
-      return null;
+      rethrow; // Lanzamos el error para que el provider lo capture
     }
   }
 
@@ -179,6 +181,20 @@ class DatabaseService {
   }
 
   // --- COMPROBANTES DE PAGOS ---
+  Future<List<BankAccountModel>> getBankAccounts() async {
+    try {
+      final data = await _supabase
+          .from('cuentas_bancarias')
+          .select('*')
+          .eq('activo', true)
+          .order('created_at');
+      return (data as List).map((json) => BankAccountModel.fromJson(json)).toList();
+    } catch (e) {
+      print('Error al obtener cuentas bancarias: $e');
+      return [];
+    }
+  }
+
   Future<String?> uploadReceiptFile(String orderId, dynamic fileBytes, String extension) async {
     try {
       final fileName = '$orderId/receipt_${DateTime.now().millisecondsSinceEpoch}.$extension';
@@ -252,6 +268,22 @@ class DatabaseService {
       print('Error al obtener perfil administrativo: $e');
     }
     return null;
+  }
+
+  // --- REDES SOCIALES ---
+  Future<List<SocialNetworkModel>> getSocialNetworks() async {
+    try {
+      final response = await _supabase
+          .from('redes_sociales')
+          .select()
+          .eq('activo', true)
+          .order('orden', ascending: true);
+      
+      return (response as List).map((json) => SocialNetworkModel.fromJson(json)).toList();
+    } catch (e) {
+      print('Error al obtener redes sociales: $e');
+      return [];
+    }
   }
 
   // --- NOTIFICACIONES ---

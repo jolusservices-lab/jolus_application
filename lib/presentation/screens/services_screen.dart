@@ -6,6 +6,7 @@ import '../../core/services/database_service.dart';
 import '../../core/models/service_model.dart';
 import '../../core/providers/navigation_provider.dart';
 import '../../core/providers/user_provider.dart';
+import '../../core/providers/notification_provider.dart';
 import '../widgets/filter_chip.dart';
 import '../widgets/service_detail_card.dart';
 import 'notifications_screen.dart';
@@ -95,12 +96,46 @@ class _ServicesScreenState extends State<ServicesScreen> {
               },
             ),
             actions: [
-              IconButton(
-                icon: const Icon(Icons.notifications_none_rounded, color: JolusColors.primary),
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const NotificationsScreen()),
-                ),
+              Consumer<NotificationProvider>(
+                builder: (context, notifProvider, _) {
+                  final unreadCount = notifProvider.unreadCount;
+                  return IconButton(
+                    icon: Stack(
+                      children: [
+                        const Icon(Icons.notifications_none_rounded, color: JolusColors.primary),
+                        if (unreadCount > 0)
+                          Positioned(
+                            right: 0,
+                            top: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(1),
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              constraints: const BoxConstraints(
+                                minWidth: 12,
+                                minHeight: 12,
+                              ),
+                              child: Text(
+                                '$unreadCount',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+                    ),
+                  );
+                },
               ),
               const SizedBox(width: 8),
             ],

@@ -13,6 +13,8 @@ class ProfileAdminModel {
   final String? linkInstagram;
   final String? linkWhatsapp;
   final String? urlFoto;
+  final double? iva;
+  final double? logistica;
   final DateTime? fechaCreacion;
   final DateTime? fechaModificacion;
 
@@ -31,6 +33,8 @@ class ProfileAdminModel {
     this.linkInstagram,
     this.linkWhatsapp,
     this.urlFoto,
+    this.iva,
+    this.logistica,
     this.fechaCreacion,
     this.fechaModificacion,
   });
@@ -51,6 +55,8 @@ class ProfileAdminModel {
       linkInstagram: json['link_instagram']?.toString(),
       linkWhatsapp: json['link_whatsapp']?.toString(),
       urlFoto: json['url_foto']?.toString(),
+      iva: (json['iva'] as num?)?.toDouble(),
+      logistica: (json['logistica'] as num?)?.toDouble(),
       fechaCreacion: json['fecha_creacion'] != null ? DateTime.parse(json['fecha_creacion'].toString()) : null,
       fechaModificacion: json['fecha_modificacion'] != null ? DateTime.parse(json['fecha_modificacion'].toString()) : null,
     );
@@ -71,6 +77,8 @@ class ProfileAdminModel {
       'link_instagram': linkInstagram,
       'link_whatsapp': linkWhatsapp,
       'url_foto': urlFoto,
+      'iva': iva,
+      'logistica': logistica,
     };
   }
 }

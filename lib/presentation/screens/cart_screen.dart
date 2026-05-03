@@ -5,6 +5,7 @@ import '../../core/theme/colors.dart';
 import '../../core/providers/cart_provider.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/providers/navigation_provider.dart';
+import '../../core/providers/notification_provider.dart';
 import 'checkout_screen.dart';
 import 'notifications_screen.dart';
 
@@ -105,12 +106,46 @@ class _CartScreenState extends State<CartScreen> {
               );
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: Color(0xFF00236F)),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const NotificationsScreen()),
-            ),
+          Consumer<NotificationProvider>(
+            builder: (context, notifProvider, _) {
+              final unreadCount = notifProvider.unreadCount;
+              return IconButton(
+                icon: Stack(
+                  children: [
+                    const Icon(Icons.notifications_outlined, color: Color(0xFF00236F)),
+                    if (unreadCount > 0)
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(1),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 12,
+                            minHeight: 12,
+                          ),
+                          child: Text(
+                            '$unreadCount',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+                ),
+              );
+            },
           ),
         ],
       ),

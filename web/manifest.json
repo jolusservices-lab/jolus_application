@@ -1,6 +1,6 @@
 {
-    "name": "jolus_application",
-    "short_name": "jolus_application",
+    "name": "Jolus Services",
+    "short_name": "Jolus Services",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
