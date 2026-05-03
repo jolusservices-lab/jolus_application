@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:mailer/mailer.dart';
 import 'package:mailer/smtp_server.dart';
 import '../../models/payment_receipt_model.dart';
@@ -6,11 +7,9 @@ import '../../models/order_model.dart';
 import '../database_service.dart';
 
 class EmailService {
-  // Configuración de la cuenta de la empresa (se recomienda usar variables de entorno o un config seguro)
-  // Para este ejemplo usaremos Gmail como proveedor común.
-  // IMPORTANTE: Para Gmail se requiere "Contraseña de aplicación" si tienes 2FA.
-  static const String _companyEmail = 'tu-correo-empresa@gmail.com'; 
-  static const String _appPassword = 'tu-password-de-aplicacion'; 
+  // Configuración de la cuenta de la empresa
+  // Se obtiene dinámicamente de la tabla profile_admin
+  static const String _appPassword = 'bosd umbu gdwp yymo'; 
 
   final _dbService = DatabaseService();
 
@@ -20,16 +19,22 @@ class EmailService {
     required String orderId,
     File? receiptImage,
   }) async {
-    // 1. Obtener detalles del pedido para el cuerpo del correo
-    // Nota: Podrías querer obtener también los items del pedido si es necesario
+    // 1. Obtener el correo de la empresa desde el perfil administrativo en la BD
+    final adminProfile = await _dbService.getAdminProfile();
+    final companyEmail = adminProfile?.correoElectronico;
+
+    if (companyEmail == null || companyEmail.isEmpty) {
+      debugPrint('Error: Correo de empresa no configurado en profile_admin');
+      return false;
+    }
     
-    final smtpServer = gmail(_companyEmail, _appPassword);
+    final smtpServer = gmail(companyEmail, _appPassword);
 
     // Crear el mensaje
     final message = Message()
-      ..from = Address(_companyEmail, 'Jolus Services')
+      ..from = Address(companyEmail, 'Jolus Services')
       ..recipients.add(customerEmail)
-      ..bccRecipients.add(_companyEmail) // Copia oculta a la empresa
+      ..bccRecipients.add(companyEmail) // Copia oculta a la empresa
       ..subject = 'Confirmación de Reporte de Pago - Pedido #$orderId'
       ..html = """
         <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px;">
