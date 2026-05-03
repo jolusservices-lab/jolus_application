@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,6 +8,7 @@ import '../../core/providers/cart_provider.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/providers/order_provider.dart';
 import '../../core/services/database_service.dart';
+import '../../core/services/email/email_service.dart';
 import '../../core/models/payment_receipt_model.dart';
 import '../../core/models/bank_account_model.dart';
 import '../../core/theme/colors.dart';
@@ -28,6 +30,7 @@ class PaymentDetailScreen extends StatefulWidget {
 
 class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
   final _dbService = DatabaseService();
+  final _emailService = EmailService();
   final _nameController = TextEditingController();
   final _idController = TextEditingController();
   final _bankController = TextEditingController();
@@ -134,7 +137,20 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
 
       await _dbService.uploadPaymentReceipt(receipt);
 
-      // 3. Actualizar el estado del pedido a 'en revisión' o similar
+      // 3. Enviar correo de confirmación
+      try {
+        await _emailService.sendPaymentConfirmationEmail(
+          receipt: receipt,
+          customerEmail: _emailController.text.trim(),
+          orderId: widget.orderId,
+          receiptImage: File(_imageFile!.path),
+        );
+      } catch (e) {
+        debugPrint('Error enviando correo (no bloqueante): $e');
+        // No bloqueamos el flujo principal si el correo falla
+      }
+
+      // 4. Actualizar el estado del pedido a 'en revisión' o similar
       if (!mounted) return;
       await Provider.of<OrderProvider>(context, listen: false)
           .updateOrderStatus(widget.orderId, 'en revisión');
