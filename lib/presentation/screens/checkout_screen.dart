@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import '../../core/theme/colors.dart';
 import '../../core/providers/cart_provider.dart';
 import '../../core/providers/order_provider.dart';
@@ -21,7 +23,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 1));
   String _selectedTime = '10:00 AM';
   final TextEditingController _commentController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
   bool _isProcessing = false;
+  bool _isGettingLocation = false;
   double _ivaPercent = 12.0;
   double _logisticaCost = 15.0;
   bool _isLoadingConfig = true;
@@ -36,6 +40,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   void initState() {
     super.initState();
     _loadConfig();
+    _addressController.text = Provider.of<UserProvider>(context, listen: false).address;
   }
 
   Future<void> _loadConfig() async {
@@ -59,7 +64,50 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   void dispose() {
     _commentController.dispose();
+    _addressController.dispose();
     super.dispose();
+  }
+
+  Future<void> _getCurrentLocation() async {
+    setState(() => _isGettingLocation = true);
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        throw 'Los servicios de ubicación están desactivados.';
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          throw 'Permisos de ubicación denegados.';
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        throw 'Los permisos de ubicación están permanentemente denegados.';
+      }
+
+      Position position = await Geolocator.getCurrentPosition();
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks[0];
+        String address = "${place.street}, ${place.locality}, ${place.country}";
+        setState(() {
+          _addressController.text = address;
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al obtener ubicación: $e')),
+      );
+    } finally {
+      setState(() => _isGettingLocation = false);
+    }
   }
 
   Future<void> _handleConfirmOrder() async {
@@ -112,7 +160,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         total: total,
         items: cart.items.values.toList(),
         fecha: orderDate,
-        direccion: user.address.isNotEmpty ? user.address : 'Dirección no especificada',
+        direccion: _addressController.text.isNotEmpty ? _addressController.text : 'Dirección no especificada',
         metodoPago: 'Transferencia/Depósito',
         telefono: user.phone,
         comentario: combinedDateTime, // Se guarda en 'comentario'
@@ -219,6 +267,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             const SizedBox(height: 16),
             _buildDateCard(),
             const SizedBox(height: 32),
+            _buildHeader('Dirección del Evento'),
+            const SizedBox(height: 16),
+            _buildAddressField(),
+            const SizedBox(height: 32),
             _buildHeader('Hora de Inicio'),
             const SizedBox(height: 16),
             _buildTimeGrid(),
@@ -292,6 +344,50 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
     if (picked != null) setState(() => _selectedDate = picked);
+  }
+
+  Widget _buildAddressField() {
+    return Column(
+      children: [
+        TextField(
+          controller: _addressController,
+          decoration: InputDecoration(
+            hintText: 'Ej: Calle Principal y Av. Central',
+            prefixIcon: const Icon(Icons.location_on_rounded, color: Color(0xFF1F6FE5)),
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: Colors.grey.withOpacity(0.1)),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        InkWell(
+          onTap: _isGettingLocation ? null : _getCurrentLocation,
+          child: Row(
+            children: [
+              _isGettingLocation 
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.my_location, size: 20, color: Color(0xFF1F6FE5)),
+              const SizedBox(width: 8),
+              Text(
+                'Usar mi ubicación actual',
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF1F6FE5),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildTimeGrid() {

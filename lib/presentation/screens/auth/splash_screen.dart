@@ -27,23 +27,38 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   }
 
   Future<void> _checkSession() async {
-    // Dar tiempo a la animación y a la inicialización de Supabase
-    await Future.delayed(const Duration(seconds: 3));
-    
-    if (!mounted) return;
+    try {
+      // Dar tiempo mínimo para ver la animación
+      await Future.delayed(const Duration(seconds: 3));
+      
+      if (!mounted) return;
 
-    final session = Supabase.instance.client.auth.currentSession;
-    
-    if (session != null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const MainNavigation()),
-      );
-    } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
+      // Obtenemos la sesión actual de forma segura
+      final session = Supabase.instance.client.auth.currentSession;
+      debugPrint('DEBUG: Sesión actual: ${session?.user.email ?? "Ninguna"}');
+      
+      if (!mounted) return;
+
+      if (session != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainNavigation()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error en SplashScreen: $e');
+      // En caso de error, intentamos ir al Login de todos modos
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+      }
     }
   }
 

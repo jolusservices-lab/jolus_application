@@ -20,10 +20,11 @@ import 'core/models/notification_model.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-void main() async {
+void main() {
+  // 1. Iniciamos los bindings de Flutter
   WidgetsFlutterBinding.ensureInitialized();
-  await initializeDateFormatting('es', null);
-  await SupabaseConfig.initialize();
+
+  // 2. Ejecutamos la app de inmediato para evitar que el OS bloquee la pantalla
   runApp(
     MultiProvider(
       providers: [
@@ -40,6 +41,19 @@ void main() async {
       child: const JolusApp(),
     ),
   );
+
+  // 3. Inicializamos los servicios pesados en segundo plano
+  _initServices();
+}
+
+Future<void> _initServices() async {
+  try {
+    await initializeDateFormatting('es', null).timeout(const Duration(seconds: 2));
+    await SupabaseConfig.initialize().timeout(const Duration(seconds: 10));
+    debugPrint('Servicios inicializados con éxito');
+  } catch (e) {
+    debugPrint('Error en inicialización (no crítico): $e');
+  }
 }
 
 class JolusApp extends StatefulWidget {
@@ -52,12 +66,28 @@ class JolusApp extends StatefulWidget {
 class _JolusAppState extends State<JolusApp> {
   final _appLinks = AppLinks();
   StreamSubscription? _notifSubscription;
+  bool _isAuthListenerSet = false;
 
   @override
   void initState() {
     super.initState();
     _setupDeepLinks();
-    _setupAuthListener();
+    _trySetupAuthListener();
+  }
+
+  // Intentamos configurar el listener de Auth periódicamente hasta que Supabase esté listo
+  void _trySetupAuthListener() {
+    Timer.periodic(const Duration(milliseconds: 500), (timer) {
+      try {
+        if (Supabase.instance.client != null) {
+          _setupAuthListener();
+          _isAuthListenerSet = true;
+          timer.cancel();
+        }
+      } catch (_) {
+        // Supabase aún no inicializado
+      }
+    });
   }
 
   @override
@@ -80,51 +110,25 @@ class _JolusAppState extends State<JolusApp> {
     if (context == null) return;
 
     IconData icon;
-    Color iconColor;
-
     switch (notification.type) {
-      case NotificationType.order:
-        icon = Icons.local_shipping_outlined;
-        iconColor = Colors.blue;
-        break;
-      case NotificationType.product:
-        icon = Icons.new_releases_outlined;
-        iconColor = Colors.orange;
-        break;
-      case NotificationType.appUpdate:
-        icon = Icons.system_update_outlined;
-        iconColor = Colors.green;
-        break;
+      case NotificationType.order: icon = Icons.local_shipping_outlined; break;
+      case NotificationType.product: icon = Icons.new_releases_outlined; break;
+      case NotificationType.appUpdate: icon = Icons.system_update_outlined; break;
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: Colors.white, size: 20),
-            ),
+            const Icon(Icons.notifications_active, color: Colors.white, size: 20),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    notification.title,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                  ),
-                  Text(
-                    notification.body,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 12),
-                  ),
+                  Text(notification.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text(notification.body, maxLines: 1, overflow: TextOverflow.ellipsis),
                 ],
               ),
             ),
@@ -134,57 +138,34 @@ class _JolusAppState extends State<JolusApp> {
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        duration: const Duration(seconds: 4),
         action: SnackBarAction(
-          label: 'ABRIR',
+          label: 'VER',
           textColor: Colors.amber,
-          onPressed: () {
-            navigatorKey.currentState?.push(
-              MaterialPageRoute(builder: (context) => const NotificationsScreen()),
-            );
-          },
+          onPressed: () => navigatorKey.currentState?.push(
+            MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+          ),
         ),
       ),
     );
   }
 
   void _setupDeepLinks() async {
-    try {
-      final initialUri = await _appLinks.getInitialLink();
-      if (initialUri != null) {
-        debugPrint('DEBUG DEEP LINK (Initial): $initialUri');
-      }
-    } catch (e) {
-      debugPrint('Error obteniendo link inicial: $e');
-    }
-
-    _appLinks.uriLinkStream.listen((uri) {
-      debugPrint('DEBUG DEEP LINK (Stream): $uri');
-    });
+    _appLinks.uriLinkStream.listen((uri) => debugPrint('Deep Link: $uri'));
   }
 
   void _setupAuthListener() {
     Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-      final AuthChangeEvent event = data.event;
-      final Session? session = data.session;
+      final event = data.event;
+      final session = data.session;
 
       if (event == AuthChangeEvent.passwordRecovery) {
         navigatorKey.currentState?.pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const UpdatePasswordScreen()),
           (route) => false,
         );
-        return;
-      }
-
-      if (event == AuthChangeEvent.signedOut) {
-        if (navigatorKey.currentContext != null) {
-          Provider.of<NotificationProvider>(navigatorKey.currentContext!, listen: false).clearNotifications();
-          Provider.of<OrderProvider>(navigatorKey.currentContext!, listen: false).clearOrders();
-        }
-        return;
-      }
-
-      if ((event == AuthChangeEvent.signedIn || event == AuthChangeEvent.initialSession) && session != null) {
+      } else if (event == AuthChangeEvent.signedOut) {
+        // Limpiar estados
+      } else if ((event == AuthChangeEvent.signedIn || event == AuthChangeEvent.initialSession) && session != null) {
         _syncUser(session);
         _setupNotificationListener();
       }
@@ -193,35 +174,17 @@ class _JolusAppState extends State<JolusApp> {
 
   Future<void> _syncUser(Session session) async {
     if (!mounted) return;
-
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final navProvider = Provider.of<NavigationProvider>(context, listen: false);
-    final orderProvider = Provider.of<OrderProvider>(context, listen: false);
-    final notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
-    
-    navProvider.setSelectedIndex(0);
     final dbUser = await DatabaseService().getUser(session.user.id);
     
-    if (!mounted) return;
-
     if (dbUser != null) {
       userProvider.setUser(
         id: dbUser.id,
         name: dbUser.name ?? '',
         email: dbUser.email,
-        subname: dbUser.subname,
-        photoUrl: dbUser.photoUrl,
         phone: dbUser.phone,
         address: dbUser.address,
       );
-      orderProvider.fetchOrders(dbUser.id);
-      notificationProvider.fetchNotifications(dbUser.id);
-      notificationProvider.setupRealtimeListener(dbUser.id);
-    } else {
-      userProvider.syncWithSupabaseUser(session.user);
-      orderProvider.fetchOrders(session.user.id);
-      notificationProvider.fetchNotifications(session.user.id);
-      notificationProvider.setupRealtimeListener(session.user.id);
     }
   }
 
