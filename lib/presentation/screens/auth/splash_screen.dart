@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:geolocator/geolocator.dart';
 import 'login_screen.dart';
 import '../../widgets/main_navigation.dart';
 
@@ -24,6 +25,18 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     )..repeat();
 
     _checkSession();
+    _requestPermissions();
+  }
+
+  Future<void> _requestPermissions() async {
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        await Geolocator.requestPermission();
+      }
+    } catch (e) {
+      debugPrint('Error solicitando permisos: $e');
+    }
   }
 
   Future<void> _checkSession() async {

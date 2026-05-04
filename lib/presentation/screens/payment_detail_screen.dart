@@ -137,6 +137,15 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
 
       await _dbService.uploadPaymentReceipt(receipt);
 
+      // 2.5 Crear notificación en la base de datos para el usuario
+      await _dbService.createNotification(
+        userId: user.id,
+        title: 'Reporte de Pago Recibido',
+        message: 'Hemos recibido tu comprobante por \$${widget.total.toStringAsFixed(2)}. El pedido #${widget.orderId} está en revisión.',
+        type: 'order',
+        data: {'order_id': widget.orderId},
+      );
+
       // 3. Enviar correo de confirmación
       try {
         await _emailService.sendPaymentConfirmationEmail(

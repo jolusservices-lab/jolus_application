@@ -17,6 +17,8 @@ import 'presentation/screens/notifications_screen.dart';
 import 'core/supabase_config.dart';
 import 'core/services/database_service.dart';
 import 'core/models/notification_model.dart';
+import 'core/services/notification_service.dart';
+
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -50,6 +52,7 @@ Future<void> _initServices() async {
   try {
     await initializeDateFormatting('es', null).timeout(const Duration(seconds: 2));
     await SupabaseConfig.initialize().timeout(const Duration(seconds: 10));
+    await LocalNotificationService.initialize();
     debugPrint('Servicios inicializados con éxito');
   } catch (e) {
     debugPrint('Error en inicialización (no crítico): $e');
@@ -66,7 +69,6 @@ class JolusApp extends StatefulWidget {
 class _JolusAppState extends State<JolusApp> {
   final _appLinks = AppLinks();
   StreamSubscription? _notifSubscription;
-  bool _isAuthListenerSet = false;
 
   @override
   void initState() {
@@ -79,11 +81,10 @@ class _JolusAppState extends State<JolusApp> {
   void _trySetupAuthListener() {
     Timer.periodic(const Duration(milliseconds: 500), (timer) {
       try {
-        if (Supabase.instance.client != null) {
-          _setupAuthListener();
-          _isAuthListenerSet = true;
-          timer.cancel();
-        }
+        // Verificar si Supabase está inicializado
+        Supabase.instance.client;
+        _setupAuthListener();
+        timer.cancel();
       } catch (_) {
         // Supabase aún no inicializado
       }
@@ -99,9 +100,25 @@ class _JolusAppState extends State<JolusApp> {
   void _setupNotificationListener() {
     if (_notifSubscription != null) return;
     
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
     final notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
+    
+    // Iniciar escucha en tiempo real y cargar historial si hay usuario
+    if (userProvider.id.isNotEmpty) {
+      notificationProvider.setupRealtimeListener(userProvider.id);
+      notificationProvider.fetchNotifications(userProvider.id);
+    }
+
     _notifSubscription = notificationProvider.onNewNotification.listen((notification) {
+      // 1. Mostrar dentro de la app (SnackBar)
       _showNotificationSnackBar(notification);
+      
+      // 2. Mostrar fuera de la app (Notificación de sistema)
+      LocalNotificationService.showNotification(
+        id: notification.id.hashCode,
+        title: notification.title,
+        body: notification.body,
+      );
     });
   }
 
@@ -109,7 +126,7 @@ class _JolusAppState extends State<JolusApp> {
     final context = navigatorKey.currentContext;
     if (context == null) return;
 
-    IconData icon;
+    IconData icon = Icons.notifications_active;
     switch (notification.type) {
       case NotificationType.order: icon = Icons.local_shipping_outlined; break;
       case NotificationType.product: icon = Icons.new_releases_outlined; break;
@@ -120,7 +137,7 @@ class _JolusAppState extends State<JolusApp> {
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.notifications_active, color: Colors.white, size: 20),
+            Icon(icon, color: Colors.white, size: 20),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -154,7 +171,7 @@ class _JolusAppState extends State<JolusApp> {
   }
 
   void _setupAuthListener() {
-    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+    Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
       final event = data.event;
       final session = data.session;
 
@@ -164,9 +181,16 @@ class _JolusAppState extends State<JolusApp> {
           (route) => false,
         );
       } else if (event == AuthChangeEvent.signedOut) {
-        // Limpiar estados
+        // Limpiar estados y cancelar suscripciones
+        _notifSubscription?.cancel();
+        _notifSubscription = null;
+        if (mounted) {
+          Provider.of<NotificationProvider>(context, listen: false).clearNotifications();
+          Provider.of<UserProvider>(context, listen: false).clearUser();
+        }
       } else if ((event == AuthChangeEvent.signedIn || event == AuthChangeEvent.initialSession) && session != null) {
-        _syncUser(session);
+        // IMPORTANTE: Esperar a que el usuario esté sincronizado en la DB
+        await _syncUser(session);
         _setupNotificationListener();
       }
     });
@@ -178,13 +202,17 @@ class _JolusAppState extends State<JolusApp> {
     final dbUser = await DatabaseService().getUser(session.user.id);
     
     if (dbUser != null) {
-      userProvider.setUser(
+      await (userProvider as dynamic).setUser(
         id: dbUser.id,
         name: dbUser.name ?? '',
+        subname: dbUser.subname ?? '',
         email: dbUser.email,
-        phone: dbUser.phone,
-        address: dbUser.address,
+        phone: dbUser.phone ?? '',
+        address: dbUser.address ?? '',
+        photoUrl: dbUser.photoUrl,
       );
+    } else {
+      await (userProvider as dynamic).syncWithSupabaseUser(session.user);
     }
   }
 

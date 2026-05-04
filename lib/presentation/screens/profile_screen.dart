@@ -544,7 +544,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               TextButton.icon(
                 onPressed: () async {
                   // Limpiar datos del usuario
-                  userProvider.clearUser();
+                  await userProvider.clearUser();
                   
                   // Cerrar sesión en Supabase
                   await Supabase.instance.client.auth.signOut();

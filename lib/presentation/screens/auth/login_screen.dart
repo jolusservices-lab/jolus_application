@@ -52,22 +52,17 @@ class _LoginScreenState extends State<LoginScreen> {
           final userProvider = context.read<UserProvider>();
           
           if (userData != null) {
-            await userProvider.updateProfile(
+            await userProvider.setUser(
+              id: user.id,
               name: userData.name ?? '',
               subname: userData.subname ?? '',
               email: userData.email ?? '',
               phone: userData.phone ?? '',
               address: userData.address ?? '',
-            );
-            userProvider.setUser(
-              id: user.id,
-              name: userData.name ?? '',
-              subname: userData.subname ?? '',
-              email: userData.email ?? '',
               photoUrl: userData.photoUrl,
             );
           } else {
-            userProvider.syncWithSupabaseUser(user);
+            await userProvider.syncWithSupabaseUser(user);
           }
 
           Navigator.pushReplacement(
@@ -366,15 +361,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                             final userData = await DatabaseService().getUser(response!.user!.id);
                                             
                                             if (userData != null) {
-                                              userProvider.setUser(
+                                              await userProvider.setUser(
                                                 id: userData.id,
                                                 name: userData.name ?? '',
                                                 subname: userData.subname ?? '',
                                                 email: userData.email ?? '',
+                                                phone: userData.phone ?? '',
+                                                address: userData.address ?? '',
                                                 photoUrl: userData.photoUrl,
                                               );
                                             } else {
-                                              userProvider.syncWithSupabaseUser(response.user);
+                                              await userProvider.syncWithSupabaseUser(response.user);
                                             }
 
                                             Navigator.pushReplacement(

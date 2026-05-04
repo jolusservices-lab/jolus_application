@@ -69,6 +69,7 @@ class NotificationProvider with ChangeNotifier {
   void setupRealtimeListener(String userId) {
     if (_channel != null) return;
 
+    // Escuchar cambios para este usuario específico o generales
     _channel = _supabase
         .channel('public:notificaciones')
         .onPostgresChanges(
@@ -77,11 +78,18 @@ class NotificationProvider with ChangeNotifier {
           table: 'notificaciones',
           callback: (payload) {
             final newJson = payload.newRecord;
-            if (newJson['user_id'] == null || newJson['user_id'] == userId) {
+            final String? targetUserId = newJson['user_id'];
+            
+            // Si es para todos (null) o específicamente para este usuario
+            if (targetUserId == null || targetUserId == userId) {
               final newNotif = NotificationModel.fromJson(newJson);
-              _notifications.insert(0, newNotif);
-              _newNotificationController.add(newNotif); // Notificamos el nuevo evento
-              notifyListeners();
+              
+              // Evitar duplicados si ya se cargó por fetch
+              if (!_notifications.any((n) => n.id == newNotif.id)) {
+                _notifications.insert(0, newNotif);
+                _newNotificationController.add(newNotif);
+                notifyListeners();
+              }
             }
           },
         )

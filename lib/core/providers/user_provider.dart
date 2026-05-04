@@ -38,7 +38,7 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setUser({
+  Future<void> setUser({
     required String id,
     required String name,
     required String email,
@@ -69,11 +69,10 @@ class UserProvider extends ChangeNotifier {
       await prefs.remove('user_photo_url');
     }
     
-    // Eliminada la llamada a syncUser aquí para evitar duplicados
     notifyListeners();
   }
 
-  void syncWithSupabaseUser(dynamic user) {
+  Future<void> syncWithSupabaseUser(dynamic user) async {
     if (user == null) return;
     
     final String id = user.id;
@@ -81,7 +80,22 @@ class UserProvider extends ChangeNotifier {
     final String email = user.email ?? '';
     final String? photoUrl = user.userMetadata?['avatar_url'] ?? user.userMetadata?['picture'];
 
-    setUser(id: id, name: name, email: email, photoUrl: photoUrl);
+    await setUser(id: id, name: name, email: email, photoUrl: photoUrl);
+
+    try {
+      await _dbService.syncUser(UserModel(
+        id: id,
+        email: email,
+        name: name,
+        photoUrl: photoUrl,
+        subname: '',
+        phone: '',
+        address: '',
+      ));
+      debugPrint('Sincronización exitosa con la tabla usuarios');
+    } catch (e) {
+      debugPrint('Error crítico sincronizando usuario: $e');
+    }
   }
 
   Future<void> updateProfile({
@@ -104,7 +118,6 @@ class UserProvider extends ChangeNotifier {
     await prefs.setString('user_phone', phone);
     await prefs.setString('user_address', address);
 
-    // Sincronizar con Supabase solo cuando sea una actualización explícita
     if (_id.isNotEmpty) {
       await _dbService.syncUser(UserModel(
         id: _id,
@@ -127,7 +140,7 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void clearUser() async {
+  Future<void> clearUser() async {
     _id = '';
     _name = 'Invitado';
     _subname = '';
@@ -137,7 +150,7 @@ class UserProvider extends ChangeNotifier {
     _address = '';
     
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear(); // Limpiar todo al cerrar sesión
+    await prefs.clear();
     
     notifyListeners();
   }

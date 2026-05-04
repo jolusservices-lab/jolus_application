@@ -49,7 +49,8 @@ class DatabaseService {
     try {
       await _supabase.from('usuarios').upsert(user.toJson());
     } catch (e) {
-      print('Error al sincronizar usuario: $e');
+      print('Error al sincronizar usuario en DB: $e');
+      rethrow; // Lanzar para que el Provider sepa que falló
     }
   }
 

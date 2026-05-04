@@ -83,7 +83,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         // 4. Mostrar por pantalla los datos enviados y confirmar la carga
         if (mounted) {
           // Actualizar estado local
-          context.read<UserProvider>().setUser(
+          await context.read<UserProvider>().setUser(
             id: newUser.id,
             name: newUser.name ?? '',
             subname: newUser.subname ?? '',
