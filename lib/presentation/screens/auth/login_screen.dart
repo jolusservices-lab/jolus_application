@@ -345,65 +345,51 @@ class _LoginScreenState extends State<LoginScreen> {
                               ],
                             ),
                             const SizedBox(height: 24),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _SocialButton(
-                                    icon: Icons.g_mobiledata,
-                                    label: 'Google',
-                                    onPressed: () async {
-                                      try {
-                                        final authService = AuthService();
-                                        final response = await authService.signInWithGoogle();
-                                        if (response?.user != null) {
-                                          if (mounted) {
-                                            final userProvider = context.read<UserProvider>();
-                                            final userData = await DatabaseService().getUser(response!.user!.id);
-                                            
-                                            if (userData != null) {
-                                              await userProvider.setUser(
-                                                id: userData.id,
-                                                name: userData.name ?? '',
-                                                subname: userData.subname ?? '',
-                                                email: userData.email ?? '',
-                                                phone: userData.phone ?? '',
-                                                address: userData.address ?? '',
-                                                photoUrl: userData.photoUrl,
-                                              );
-                                            } else {
-                                              await userProvider.syncWithSupabaseUser(response.user);
-                                            }
-
-                                            Navigator.pushReplacement(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => WelcomeScreen(
-                                                  username: userProvider.name.split(' ')[0],
-                                                  isNewAccount: false,
-                                                ),
-                                              ),
-                                            );
-                                          }
-                                        }
-                                      } catch (e) {
-                                        if (mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('Error al iniciar sesión con Google: $e')),
-                                          );
-                                        }
+                            _SocialButton(
+                              icon: Icons.g_mobiledata,
+                              label: 'Google',
+                              onPressed: () async {
+                                try {
+                                  final authService = AuthService();
+                                  final response = await authService.signInWithGoogle();
+                                  if (response?.user != null) {
+                                    if (mounted) {
+                                      final userProvider = context.read<UserProvider>();
+                                      final userData = await DatabaseService().getUser(response!.user!.id);
+                                      
+                                      if (userData != null) {
+                                        await userProvider.setUser(
+                                          id: userData.id,
+                                          name: userData.name ?? '',
+                                          subname: userData.subname ?? '',
+                                          email: userData.email ?? '',
+                                          phone: userData.phone ?? '',
+                                          address: userData.address ?? '',
+                                          photoUrl: userData.photoUrl,
+                                        );
+                                      } else {
+                                        await userProvider.syncWithSupabaseUser(response.user);
                                       }
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: _SocialButton(
-                                    icon: Icons.apple,
-                                    label: 'Apple',
-                                    onPressed: () {},
-                                  ),
-                                ),
-                              ],
+
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => WelcomeScreen(
+                                            username: userProvider.name.split(' ')[0],
+                                            isNewAccount: false,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  }
+                                } catch (e) {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Error al iniciar sesión con Google: $e')),
+                                    );
+                                  }
+                                }
+                              },
                             ),
                           ],
                         ),
